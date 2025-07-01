@@ -6,11 +6,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-
+use App\Service\MailerService;
 final class ContactFormApiController extends AbstractController
 {
     #[Route('/api/contact-form', name: 'app_contact_form_api', methods: ['POST', 'OPTIONS'])]
-    public function manageContactForm(Request $request): JsonResponse
+    public function manageContactForm(Request $request, MailerService $mailerService): JsonResponse
     {
         // Gérer les requêtes OPTIONS (preflight)
         if ($request->getMethod() === 'OPTIONS') {
@@ -37,6 +37,14 @@ final class ContactFormApiController extends AbstractController
                 return new JsonResponse(['error' => "Le champ $field est obligatoire"], 400);
             }
         }
+
+        // appeler service pour envoyer les deux mails : un pour marie/moi + un pour l'utilisateur qui a rempli le formulaire pour confirmer
+        //$mailer = $this->container->get('mailer');
+        //$mailer->sendMail($data['email'], $data['name'], $data['firstName'], $data['phone'], $data['message']);
+        
+        $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message']);
+
+        $mailerService->sendEmailToUser($data['name'], $data['firstName'], $data['email']);
 
         return new JsonResponse([
             'success' => true,
