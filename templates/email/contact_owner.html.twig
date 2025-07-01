@@ -1,0 +1,54 @@
+{# templates/emails/contact_owner.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nouveau message depuis le formulaire de contact</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        .header {
+            background-color: #f8f8f8;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nouveau message depuis le formulaire de contact</h1>
+        </div>
+        <div class="content">
+            <p><strong>Nom :</strong> {{ name }} {{ firstName }}</p>
+            <p><strong>Email :</strong> {{ contactEmail }}</p>
+            <p><strong>Téléphone :</strong> {{ phone }}</p>
+            <p><strong>Message :</strong></p>
+            <p>{{ message }}</p>
+        </div>
+        <div class="footer">
+            <p>Cet email a été envoyé automatiquement depuis le site Sushi Dot Painting.</p>
+        </div>
+    </div>
+</body>
+</html>
