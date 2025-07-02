@@ -53,7 +53,9 @@ jobs:
             echo "EMAIL_FROM='${{ secrets.EMAIL_FROM }}'"
             echo "EMAIL_OWNER='${{ secrets.EMAIL_OWNER }}'"
             echo "MAILER_DSN='${{ secrets.MAILER_DSN }}'"
-            echo "CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'"
+            echo "CORS_ALLOW_ORIGIN='^https://green-jackal-148000\.hostingersite\.com$'"
+            echo "CORS_ALLOW_METHODS='GET,POST,PUT,PATCH,DELETE,OPTIONS'"
+            echo "CORS_ALLOW_HEADERS='Content-Type,Authorization,X-Requested-With,Accept'"
           } > .env
           
           # ÉTAPE 3 : On installe les dépendances PHP
