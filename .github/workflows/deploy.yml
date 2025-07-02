@@ -1,42 +1,17 @@
-# Nom du workflow qui apparaîtra dans l'onglet "Actions" de GitHub
-name: Deploy to Production Server
-
-# Déclenche le workflow à chaque push sur la branche "main"
-on:
-  push:
-    branches: [ main ]
-
-# Définit les permissions pour le job
-permissions:
-  contents: read
-
-# Un job unique appelé "deploy" qui s'exécutera sur un serveur Ubuntu virtuel
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Action unique qui se connecte au serveur et exécute toutes les commandes
     - name: Connect to server, Pull, and Deploy
       uses: appleboy/ssh-action@v1.0.3
-      
-      env:
-        APP_SECRET: ${{ secrets.APP_SECRET }}
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
-        DATABASE_SERVER_VERSION: ${{ secrets.DATABASE_SERVER_VERSION }}
-        EMAIL_ADMIN: ${{ secrets.EMAIL_ADMIN }}
-        EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        EMAIL_OWNER: ${{ secrets.EMAIL_OWNER }}
-        MAILER_DSN: ${{ secrets.MAILER_DSN }}
-        
       with:
         host: ${{ secrets.SSH_SERVER }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 65002
 
-        # Script exécuté sur votre serveur Hostinger
+        # Le script est maintenant multiligne pour plus de clarté
         script: |
           # Se positionne dans le répertoire du projet
           cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony
@@ -45,39 +20,36 @@ jobs:
           echo ">>> 1. Pulling latest code from GitHub..."
           git pull origin main
           
-          # --- DÉBUT DE LA SECTION CORRIGÉE ---
-
-          # ÉTAPE 2 : Ligne de DÉBOGAGE pour vérifier si les secrets arrivent
-          # Affiche les 5 premiers caractères de APP_SECRET pour confirmer sa présence.
-          echo ">>> 2. Debugging secrets reception... APP_SECRET starts with: '${APP_SECRET:0:5}...'"
-          
-          # ÉTAPE 3 : On crée le fichier .env avec une syntaxe plus robuste (heredoc)
-          echo ">>> 3. Creating .env file from secrets..."
+          # ÉTAPE 2 : On crée le fichier .env en injectant directement les secrets
+          # Les secrets sont remplacés par GitHub Actions AVANT d'envoyer le script au serveur
+          echo ">>> 2. Creating .env file..."
           cat <<EOF > .env
           APP_ENV=prod
-          APP_SECRET='${APP_SECRET}'
-          DATABASE_URL='${DATABASE_URL}'
-          DATABASE_DRIVER='${DATABASE_DRIVER}'
-          DATABASE_SERVER_VERSION='${DATABASE_SERVER_VERSION}'
-          EMAIL_ADMIN='${EMAIL_ADMIN}'
-          EMAIL_FROM='${EMAIL_FROM}'
-          EMAIL_OWNER='${EMAIL_OWNER}'
-          MAILER_DSN='${MAILER_DSN}'
+          APP_SECRET='${{ secrets.APP_SECRET }}'
+          DATABASE_URL='${{ secrets.DATABASE_URL }}'
+          DATABASE_DRIVER='${{ secrets.DATABASE_DRIVER }}'
+          DATABASE_SERVER_VERSION='${{ secrets.DATABASE_SERVER_VERSION }}'
+          EMAIL_ADMIN='${{ secrets.EMAIL_ADMIN }}'
+          EMAIL_FROM='${{ secrets.EMAIL_FROM }}'
+          EMAIL_OWNER='${{ secrets.EMAIL_OWNER }}'
+          MAILER_DSN='${{ secrets.MAILER_DSN }}'
           CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
           EOF
-
-          # --- FIN DE LA SECTION CORRIGÉE ---
           
-          # ÉTAPE 4 : On installe les dépendances PHP
-          echo ">>> 4. Installing Composer dependencies..."
+          # Vérification simple que le fichier a été créé et n'est pas vide
+          echo ">>> .env file created. Content overview:"
+          cat .env | grep 'APP_ENV'
+          
+          # ÉTAPE 3 : On installe les dépendances PHP
+          echo ">>> 3. Installing Composer dependencies..."
           ../composer.phar install --no-dev --optimize-autoloader
           
-          # ÉTAPE 5 : On vide le cache Symfony
-          echo ">>> 5. Clearing Symfony cache..."
+          # ÉTAPE 4 : On vide le cache Symfony
+          echo ">>> 4. Clearing Symfony cache..."
           php bin/console cache:clear --env=prod
           
-          # ÉTAPE 6 : On applique les migrations de la base de données
-          echo ">>> 6. Running database migrations..."
+          # ÉTAPE 5 : On applique les migrations de la base de données
+          echo ">>> 5. Running database migrations..."
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
           
           echo "✅ Deployment finished successfully!"
