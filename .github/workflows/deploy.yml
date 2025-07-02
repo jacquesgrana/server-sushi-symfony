@@ -20,8 +20,6 @@ jobs:
     - name: Connect to server, Pull, and Deploy
       uses: appleboy/ssh-action@v1.0.3
       
-      # Le bloc 'env' est ici, au bon niveau. Ces variables seront disponibles
-      # pour le script qui s'exécute sur le serveur distant.
       env:
         APP_SECRET: ${{ secrets.APP_SECRET }}
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -33,7 +31,6 @@ jobs:
         MAILER_DSN: ${{ secrets.MAILER_DSN }}
         
       with:
-        # Les paramètres spécifiques à l'action ssh-action
         host: ${{ secrets.SSH_SERVER }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -48,33 +45,40 @@ jobs:
           echo ">>> 1. Pulling latest code from GitHub..."
           git pull origin main
           
-          # ÉTAPE 2 : On crée le fichier .env APRÈS le pull
-          echo ">>> 2. Creating .env file from secrets..."
-          {
-            echo "APP_ENV=prod"
-            echo "APP_SECRET='${APP_SECRET}'"
-            echo "DATABASE_URL='${DATABASE_URL}'"
-            echo "DATABASE_DRIVER='${DATABASE_DRIVER}'"
-            echo "DATABASE_SERVER_VERSION='${DATABASE_SERVER_VERSION}'"
-            echo "EMAIL_ADMIN='${EMAIL_ADMIN}'"
-            echo "EMAIL_FROM='${EMAIL_FROM}'"
-            echo "EMAIL_OWNER='${EMAIL_OWNER}'"
-            echo "MAILER_DSN='${MAILER_DSN}'"
-            echo "CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'"
-          } > .env
+          # --- DÉBUT DE LA SECTION CORRIGÉE ---
+
+          # ÉTAPE 2 : Ligne de DÉBOGAGE pour vérifier si les secrets arrivent
+          # Affiche les 5 premiers caractères de APP_SECRET pour confirmer sa présence.
+          echo ">>> 2. Debugging secrets reception... APP_SECRET starts with: '${APP_SECRET:0:5}...'"
           
-          # ÉTAPE 3 : On installe les dépendances PHP
-          echo ">>> 3. Installing Composer dependencies..."
+          # ÉTAPE 3 : On crée le fichier .env avec une syntaxe plus robuste (heredoc)
+          echo ">>> 3. Creating .env file from secrets..."
+          cat <<EOF > .env
+          APP_ENV=prod
+          APP_SECRET='${APP_SECRET}'
+          DATABASE_URL='${DATABASE_URL}'
+          DATABASE_DRIVER='${DATABASE_DRIVER}'
+          DATABASE_SERVER_VERSION='${DATABASE_SERVER_VERSION}'
+          EMAIL_ADMIN='${EMAIL_ADMIN}'
+          EMAIL_FROM='${EMAIL_FROM}'
+          EMAIL_OWNER='${EMAIL_OWNER}'
+          MAILER_DSN='${MAILER_DSN}'
+          CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+          EOF
+
+          # --- FIN DE LA SECTION CORRIGÉE ---
+          
+          # ÉTAPE 4 : On installe les dépendances PHP
+          echo ">>> 4. Installing Composer dependencies..."
           ../composer.phar install --no-dev --optimize-autoloader
           
-          # ÉTAPE 4 : On vide le cache Symfony
-          echo ">>> 4. Clearing Symfony cache..."
+          # ÉTAPE 5 : On vide le cache Symfony
+          echo ">>> 5. Clearing Symfony cache..."
           php bin/console cache:clear --env=prod
           
-          # ÉTAPE 5 : On applique les migrations de la base de données
-          echo ">>> 5. Running database migrations..."
+          # ÉTAPE 6 : On applique les migrations de la base de données
+          echo ">>> 6. Running database migrations..."
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
           
           echo "✅ Deployment finished successfully!"
 
-          # Fin du script
