@@ -1,86 +1,80 @@
-# Nom du workflow qui apparaîtra dans l'onglet "Actions" de GitHub
+# .github/workflows/deploy.yml
+
 name: Deploy to Production Server
 
-# Déclenche le workflow à chaque push sur la branche "main"
 on:
   push:
     branches: [ main ]
 
-# Définit les permissions pour le job, nécessaire pour certaines actions
 permissions:
   contents: read
 
-# Un job unique appelé "deploy" qui s'exécutera sur un serveur Ubuntu virtuel
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Récupère le code de votre dépôt
-    # Cette étape est nécessaire pour accéder aux fichiers de votre projet.
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    # 2. Crée le fichier .env à partir des secrets GitHub
-    # Ce fichier sera envoyé sur le serveur et ne sera jamais stocké dans votre dépôt.
-    - name: Create .env file
-      run: |
-        echo "APP_ENV=prod" >> .env
-        echo "APP_SECRET=${{ secrets.APP_SECRET }}" >> .env
-        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-        echo "DATABASE_DRIVER=${{ secrets.DATABASE_DRIVER }}" >> .env
-        echo "DATABASE_SERVER_VERSION=${{ secrets.DATABASE_SERVER_VERSION }}" >> .env
-        echo "EMAIL_ADMIN=${{ secrets.EMAIL_ADMIN }}" >> .env
-        echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
-        echo "EMAIL_OWNER=${{ secrets.EMAIL_OWNER }}" >> .env
-        echo "MAILER_DSN=${{ secrets.MAILER_DSN }}" >> .env
-
-        # Ajoutez ici d'autres variables d'environnement si nécessaire
-        # echo "VOTRE_VARIABLE=${{ secrets.VOTRE_SECRET }}" >> .env
-        echo "CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$" >> .env
-
-    # 3. Configure la clé SSH pour se connecter au serveur
-    # Utilise une action pour charger votre clé privée de manière sécurisée.
-    - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.9.0
+    # Action unique qui se connecte au serveur et exécute toutes les commandes dans le bon ordre.
+    - name: Connect to server, Pull, and Deploy
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # Vos secrets pour la connexion SSH
+        host: ${{ secrets.SSH_SERVER }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 65002
 
-    # 4. Copie le fichier .env sur le serveur de production via SCP
-    # Le port et les chemins sont spécifiques à votre configuration Hostinger.
-    - name: Copy .env file to server via scp
-      run: |
-        scp -P 65002 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null .env ${{ secrets.SSH_USER }}@${{ secrets.SSH_SERVER }}:domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony/.env
+        # Vos secrets sont passés en toute sécurité comme variables d'environnement à la session SSH.
+        env:
+          APP_SECRET: ${{ secrets.APP_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
+          DATABASE_SERVER_VERSION: ${{ secrets.DATABASE_SERVER_VERSION }}
+          EMAIL_ADMIN: ${{ secrets.EMAIL_ADMIN }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_OWNER: ${{ secrets.EMAIL_OWNER }}
+          MAILER_DSN: ${{ secrets.MAILER_DSN }}
 
-    # 5. Exécute les commandes de déploiement sur le serveur via SSH
-    # C'est ici que la magie opère : mise à jour du code, installation, etc.
-    - name: Run deployment commands on server
-      env:
-        SSH_SERVER: ${{ secrets.SSH_SERVER }}
-        SSH_USER: ${{ secrets.SSH_USER }}
-      run: |
-        ssh -p 65002 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $SSH_USER@$SSH_SERVER "
-        # Se positionne dans le répertoire du projet
-        cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony &&
-        
-        # --- ÉTAPE CORRIGÉE ET ESSENTIELLE ---
-        # Met à jour le code source depuis le dépôt Git
-        git pull origin main &&
-        
-        # Installe les dépendances Composer pour la production
-        ../composer.phar install --no-dev --optimize-autoloader &&
-        
-        # Vide le cache de Symfony pour l'environnement de production
-        php bin/console cache:clear --env=prod &&
-        
-        # Exécute les migrations de la base de données sans poser de question
-        php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration &&
-        
-        # Compile les assets pour la production (si vous utilisez AssetMapper)
-        php bin/console asset-map:compile --env=prod
-        "
+        # Script exécuté sur votre serveur Hostinger
+        script: |
+          # Se positionne dans le répertoire du projet
+          cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony
+          
+          # ÉTAPE 1 : On met à jour le code AVANT toute autre chose.
+          # Il n'y aura plus de conflit car le .env n'est pas encore là.
+          echo ">>> 1. Pulling latest code from GitHub..."
+          git pull origin main
+          
+          # ÉTAPE 2 : On crée le fichier .env APRÈS le pull.
+          # Le '>' écrase le fichier .env existant avec le nouveau contenu.
+          echo ">>> 2. Creating .env file from secrets..."
+          {
+            echo "APP_ENV=prod"
+            echo "APP_SECRET='${APP_SECRET}'"
+            echo "DATABASE_URL='${DATABASE_URL}'"
+            echo "DATABASE_DRIVER='${DATABASE_DRIVER}'"
+            echo "DATABASE_SERVER_VERSION='${DATABASE_SERVER_VERSION}'"
+            echo "EMAIL_ADMIN='${EMAIL_ADMIN}'"
+            echo "EMAIL_FROM='${EMAIL_FROM}'"
+            echo "EMAIL_OWNER='${EMAIL_OWNER}'"
+            echo "MAILER_DSN='${MAILER_DSN}'"
+            echo "CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'"
+          } > .env
+          
+          # ÉTAPE 3 : On installe les dépendances PHP
+          echo ">>> 3. Installing Composer dependencies..."
+          ../composer.phar install --no-dev --optimize-autoloader
+          
+          # ÉTAPE 4 : On vide le cache Symfony
+          echo ">>> 4. Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+          # ÉTAPE 5 : On applique les migrations de la base de données
+          echo ">>> 5. Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+          
+          # ÉTAPE 6 : On compile les assets (si besoin)
+          echo ">>> 6. Compiling assets..."
+          php bin/console asset-map:compile --env=prod
 
-    # 6. Supprime le fichier .env de votre depot
-    - name: Remove .env file
-      run: |
-        rm .env
+          echo "✅ Deployment finished successfully!"
