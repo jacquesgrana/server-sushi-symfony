@@ -2,15 +2,25 @@
 
 namespace App\Controller;
 
+use App\Repository\ContactFormProspectRepository;
+use App\Repository\ContactFormRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\MailerService;
+use App\Entity\ContactForm;
+use App\Entity\ContactFormProspect;
+
 final class ContactFormApiController extends AbstractController
 {
     #[Route('/api/contact-form', name: 'app_contact_form_api', methods: ['POST', 'OPTIONS'])]
-    public function manageContactForm(Request $request, MailerService $mailerService): JsonResponse
+    public function manageContactForm(
+        Request $request, 
+        MailerService $mailerService,
+        ContactFormProspectRepository $contactFormProspectRepository,
+        ContactFormRepository $contactFormRepository
+        ): JsonResponse
     {
         // Gérer les requêtes OPTIONS (preflight)
         if ($request->getMethod() === 'OPTIONS') {
@@ -41,6 +51,28 @@ final class ContactFormApiController extends AbstractController
         // appeler service pour envoyer les deux mails : un pour marie/moi + un pour l'utilisateur qui a rempli le formulaire pour confirmer
         //$mailer = $this->container->get('mailer');
         //$mailer->sendMail($data['email'], $data['name'], $data['firstName'], $data['phone'], $data['message']);
+
+
+        // créer entités
+        // créer contactFormprospect puis créer contactForm
+
+        $contactFormprospect = new ContactFormProspect();
+        $contactFormprospect->setName($data['name']);
+        $contactFormprospect->setFirstName($data['firstName']);
+        $contactFormprospect->setEmail($data['email']);
+        $contactFormprospect->setPhone($data['phone']);
+        $contactFormprospect->setDate(new \DateTimeImmutable());
+
+        $contactForm = new ContactForm();
+        $contactForm->setProspect($contactFormprospect);
+        $contactForm->setMessage($data['message']);
+
+        $contactFormprospect->addContactForm($contactForm);
+
+        // persister
+        $contactFormRepository->save($contactForm, false);
+        $contactFormProspectRepository->save($contactFormprospect, true);
+
         
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message']);
 

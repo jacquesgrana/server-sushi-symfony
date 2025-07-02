@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+    Options -MultiViews
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        RedirectMatch 302 ^/$ /index.php/
+    </IfModule>
+</IfModule>
+
+# Serve static files directly
+<FilesMatch "\.(css|js|scss|png|jpg|jpeg|gif|ico)$">
+    RewriteEngine Off
+</FilesMatch>

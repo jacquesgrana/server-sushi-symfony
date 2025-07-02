@@ -35,7 +35,7 @@ when@prod:
     doctrine:
         dbal:
             driver: 'pdo_mysql'
-            server_version: '8.0'  # Version MySQL en production
+            server_version: 'mariadb-10.11.10'  # Version MySQL en production : 8.0
         orm:
             auto_generate_proxy_classes: false
             proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ContactFormProspectRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ContactFormProspectRepository::class)]
@@ -27,6 +29,17 @@ class ContactFormProspect
 
     #[ORM\Column]
     private ?\DateTimeImmutable $date = null;
+
+    /**
+     * @var Collection<int, ContactForm>
+     */
+    #[ORM\OneToMany(targetEntity: ContactForm::class, mappedBy: 'prospect', orphanRemoval: true)]
+    private Collection $contactForms;
+
+    public function __construct()
+    {
+        $this->contactForms = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -89,6 +102,36 @@ class ContactFormProspect
     public function setDate(\DateTimeImmutable $date): static
     {
         $this->date = $date;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ContactForm>
+     */
+    public function getContactForms(): Collection
+    {
+        return $this->contactForms;
+    }
+
+    public function addContactForm(ContactForm $contactForm): static
+    {
+        if (!$this->contactForms->contains($contactForm)) {
+            $this->contactForms->add($contactForm);
+            $contactForm->setProspect($this);
+        }
+
+        return $this;
+    }
+
+    public function removeContactForm(ContactForm $contactForm): static
+    {
+        if ($this->contactForms->removeElement($contactForm)) {
+            // set the owning side to null (unless already changed)
+            if ($contactForm->getProspect() === $this) {
+                $contactForm->setProspect(null);
+            }
+        }
 
         return $this;
     }

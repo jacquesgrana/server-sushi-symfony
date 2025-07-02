@@ -3,24 +3,30 @@
 namespace App\Service;
 
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 
 class MailerService
 {
     private $mailer;
 
+    private string $from;
+    private string $owner;
+    //private string $admin = (isset($_ENV['EMAIL_ADMIN'])) ? $_ENV['EMAIL_ADMIN'] : '';
+
     public function __construct(MailerInterface $mailer)
     {
         $this->mailer = $mailer;
+        $this->from = isset($_ENV['EMAIL_FROM']) ? $_ENV['EMAIL_FROM'] : '';
+        $this->owner = isset($_ENV['EMAIL_OWNER']) ? $_ENV['EMAIL_OWNER'] : '';
+        // idem pour l'admin
     }
 
     public function sendEmailToOwner($name, $firstName, $contactEmail, $phone, $message)
     {
         //$text = 'Formulaire de contact de ' . $name . ' ' . $firstName . ' (' . $contactEmail . ') : ' . $phone . ' : ' . $message;
         $email = (new TemplatedEmail())
-            ->from('noreply.sushi.dot.painting@free.fr')
-            ->to('crouick@gmail.com')
+            ->from($this->from)
+            ->to($this->owner)
             ->subject('formulaire de contact')
             ->htmlTemplate('email/contact_owner.html.twig')
             ->context([
@@ -39,7 +45,7 @@ class MailerService
     {
         $text = 'Merci ' . $name . ' ' . $firstName . ' (' . $contactEmail . ') de nous avoir contacté. Nous vous recontacterons sous peu';
         $email = (new TemplatedEmail())
-            ->from('noreply.sushi.dot.painting@free.fr')
+            ->from($this->from)
             ->to($contactEmail)
             ->subject('merci de votre message')
             ->htmlTemplate('email/contact_user_confirmation.html.twig')

@@ -2,21 +2,21 @@
 
 namespace App\Repository;
 
-use App\Entity\ContactFormProspect;
+use App\Entity\ContactForm;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<ContactFormProspect>
+ * @extends ServiceEntityRepository<ContactForm>
  */
-class ContactFormProspectRepository extends ServiceEntityRepository
+class ContactFormRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ContactFormProspect::class);
+        parent::__construct($registry, ContactForm::class);
     }
 
-    public function save(ContactFormProspect $entity, bool $flush = false): void
+    public function save(ContactForm $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
 
@@ -26,7 +26,7 @@ class ContactFormProspectRepository extends ServiceEntityRepository
     }
 
     //    /**
-    //     * @return ContactFormProspect[] Returns an array of ContactFormProspect objects
+    //     * @return ContactForm[] Returns an array of ContactForm objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -40,7 +40,7 @@ class ContactFormProspectRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?ContactFormProspect
+    //    public function findOneBySomeField($value): ?ContactForm
     //    {
     //        return $this->createQueryBuilder('c')
     //            ->andWhere('c.exampleField = :val')
