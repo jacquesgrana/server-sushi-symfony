@@ -74,7 +74,9 @@ final class ContactFormApiController extends AbstractController
         $contactFormProspectRepository->save($contactFormprospect, true);
 
         
-        $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message']);
+        $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], false);
+
+        $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], true);
 
         $mailerService->sendEmailToUser($data['name'], $data['firstName'], $data['email']);
 
