@@ -1,17 +1,33 @@
+# Nom du workflow qui apparaîtra dans l'onglet "Actions" de GitHub
+name: Deploy to Production Server
+
+# Déclenche le workflow à chaque push sur la branche "main"
+on:
+  push:
+    branches: [ main ]
+
+# Définit les permissions pour le job
+permissions:
+  contents: read
+
+# Un job unique appelé "deploy" qui s'exécutera sur un serveur Ubuntu virtuel
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+    # Action unique qui se connecte au serveur et exécute toutes les commandes
     - name: Connect to server, Pull, and Deploy
       uses: appleboy/ssh-action@v1.0.3
+        
       with:
+        # Les paramètres spécifiques à l'action ssh-action
         host: ${{ secrets.SSH_SERVER }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 65002
 
-        # Le script est maintenant multiligne pour plus de clarté
+        # Script exécuté sur votre serveur Hostinger
         script: |
           # Se positionne dans le répertoire du projet
           cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony
@@ -20,25 +36,20 @@ jobs:
           echo ">>> 1. Pulling latest code from GitHub..."
           git pull origin main
           
-          # ÉTAPE 2 : On crée le fichier .env en injectant directement les secrets
-          # Les secrets sont remplacés par GitHub Actions AVANT d'envoyer le script au serveur
-          echo ">>> 2. Creating .env file..."
-          cat <<EOF > .env
-          APP_ENV=prod
-          APP_SECRET='${{ secrets.APP_SECRET }}'
-          DATABASE_URL='${{ secrets.DATABASE_URL }}'
-          DATABASE_DRIVER='${{ secrets.DATABASE_DRIVER }}'
-          DATABASE_SERVER_VERSION='${{ secrets.DATABASE_SERVER_VERSION }}'
-          EMAIL_ADMIN='${{ secrets.EMAIL_ADMIN }}'
-          EMAIL_FROM='${{ secrets.EMAIL_FROM }}'
-          EMAIL_OWNER='${{ secrets.EMAIL_OWNER }}'
-          MAILER_DSN='${{ secrets.MAILER_DSN }}'
-          CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
-          EOF
-          
-          # Vérification simple que le fichier a été créé et n'est pas vide
-          echo ">>> .env file created. Content overview:"
-          cat .env | grep 'APP_ENV'
+          # ÉTAPE 2 : On crée le fichier .env APRÈS le pull
+          echo ">>> 2. Creating .env file from secrets..."
+          {
+            echo "APP_ENV=prod"
+            echo "APP_SECRET='${{ secrets.APP_SECRET }}'"
+            echo "DATABASE_URL='${{ secrets.DATABASE_URL }}'"
+            echo "DATABASE_DRIVER='${{ secrets.DATABASE_DRIVER }}'"
+            echo "DATABASE_SERVER_VERSION='${{ secrets.DATABASE_SERVER_VERSION }}'"
+            echo "EMAIL_ADMIN='${{ secrets.EMAIL_ADMIN }}'"
+            echo "EMAIL_FROM='${{ secrets.EMAIL_FROM }}'"
+            echo "EMAIL_OWNER='${{ secrets.EMAIL_OWNER }}'"
+            echo "MAILER_DSN='${{ secrets.MAILER_DSN }}'"
+            echo "CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'"
+          } > .env
           
           # ÉTAPE 3 : On installe les dépendances PHP
           echo ">>> 3. Installing Composer dependencies..."
@@ -54,3 +65,4 @@ jobs:
           
           echo "✅ Deployment finished successfully!"
 
+          # Fin du script
