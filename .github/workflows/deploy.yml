@@ -2,6 +2,7 @@
 name: Deploy to Hostinger Production Server
 
 # Déclenche le workflow à chaque push sur la branche "main"
+# TODO : faire branche prod
 on:
   push:
     branches: [ main ]
