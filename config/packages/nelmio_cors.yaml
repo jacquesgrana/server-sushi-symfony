@@ -2,11 +2,16 @@
 nelmio_cors:
     defaults:
         origin_regex: true
+        # Correct : on veut un tableau qui contient la chaîne de l'env var
         allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
-        allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-        allow_headers: ['Content-Type', 'Authorization']
+
+        # Correct : on enlève les apostrophes pour que le processeur 'csv'
+        # retourne un VRAI tableau YAML
+        allow_methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"]
+        allow_headers: ["Content-Type","Authorization","X-Requested-With","Accept"]
+
         expose_headers: ['Link']
         max_age: 3600
         allow_credentials: true
     paths:
-        '^/api/': ~
+        '^/api/': ~ # On applique les 'defaults' à toutes les routes commençant par /api/
