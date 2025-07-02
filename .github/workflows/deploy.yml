@@ -46,17 +46,17 @@ jobs:
           # Créer un nouveau fichier .env avec le format %VAR%
           cat > .env.tmp << 'ENV_EOF'
           APP_ENV=prod
-          APP_SECRET=%APP_SECRET%
+          APP_SECRET=${APP_SECRET}
 
-          DATABASE_URL=%DATABASE_URL%
-          DATABASE_DRIVER=%DATABASE_DRIVER%
-          DATABASE_SERVER_VERSION=%DATABASE_SERVER_VERSION%
+          DATABASE_URL=${DATABASE_URL}
+          DATABASE_DRIVER=${DATABASE_DRIVER}
+          DATABASE_SERVER_VERSION=${DATABASE_SERVER_VERSION}
 
-          EMAIL_ADMIN=%EMAIL_ADMIN%
-          EMAIL_FROM=%EMAIL_FROM%
-          EMAIL_OWNER=%EMAIL_OWNER%
+          EMAIL_ADMIN=${EMAIL_ADMIN}
+          EMAIL_FROM=${EMAIL_FROM}
+          EMAIL_OWNER=${EMAIL_OWNER}
 
-          MAILER_DSN=%MAILER_DSN%
+          MAILER_DSN=${MAILER_DSN}
           ENV_EOF
 
           # Remplacer les valeurs des variables
@@ -80,12 +80,12 @@ jobs:
           git fetch origin main || exit 1
           git reset --hard origin/main || exit 1
 
-          # Installation des dépendances
-          php ../composer.phar install --no-dev --optimize-autoloader --apcu-autoloader || exit 1
+          # Installation des dépendances en production
+          php ../composer.phar install --no-dev --optimize-autoloader --apcu-autoloader --no-scripts || exit 1
 
-          # Nettoyage du cache
-          php bin/console cache:pool:clear cache.global_clearer || exit 1
-          php bin/console cache:warmup --env=prod || exit 1
+          # Nettoyage du cache en production
+          rm -rf var/cache/*
+          php bin/console cache:warmup --env=prod --no-optional-warmers || exit 1
 
           # Migrations de la base de données
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || exit 1
