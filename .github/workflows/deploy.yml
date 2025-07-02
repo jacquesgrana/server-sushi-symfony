@@ -1,52 +1,54 @@
-# .github/workflows/deploy.yml
-
+# Nom du workflow qui apparaîtra dans l'onglet "Actions" de GitHub
 name: Deploy to Production Server
 
+# Déclenche le workflow à chaque push sur la branche "main"
 on:
   push:
     branches: [ main ]
 
+# Définit les permissions pour le job
 permissions:
   contents: read
 
+# Un job unique appelé "deploy" qui s'exécutera sur un serveur Ubuntu virtuel
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Action unique qui se connecte au serveur et exécute toutes les commandes dans le bon ordre.
+    # Action unique qui se connecte au serveur et exécute toutes les commandes
     - name: Connect to server, Pull, and Deploy
       uses: appleboy/ssh-action@v1.0.3
+      
+      # Le bloc 'env' est ici, au bon niveau. Ces variables seront disponibles
+      # pour le script qui s'exécute sur le serveur distant.
+      env:
+        APP_SECRET: ${{ secrets.APP_SECRET }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
+        DATABASE_SERVER_VERSION: ${{ secrets.DATABASE_SERVER_VERSION }}
+        EMAIL_ADMIN: ${{ secrets.EMAIL_ADMIN }}
+        EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+        EMAIL_OWNER: ${{ secrets.EMAIL_OWNER }}
+        MAILER_DSN: ${{ secrets.MAILER_DSN }}
+        
       with:
-        # Vos secrets pour la connexion SSH
+        # Les paramètres spécifiques à l'action ssh-action
         host: ${{ secrets.SSH_SERVER }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 65002
-
-        # Vos secrets sont passés en toute sécurité comme variables d'environnement à la session SSH.
-        env:
-          APP_SECRET: ${{ secrets.APP_SECRET }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
-          DATABASE_SERVER_VERSION: ${{ secrets.DATABASE_SERVER_VERSION }}
-          EMAIL_ADMIN: ${{ secrets.EMAIL_ADMIN }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_OWNER: ${{ secrets.EMAIL_OWNER }}
-          MAILER_DSN: ${{ secrets.MAILER_DSN }}
 
         # Script exécuté sur votre serveur Hostinger
         script: |
           # Se positionne dans le répertoire du projet
           cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony
           
-          # ÉTAPE 1 : On met à jour le code AVANT toute autre chose.
-          # Il n'y aura plus de conflit car le .env n'est pas encore là.
+          # ÉTAPE 1 : On met à jour le code AVANT toute autre chose
           echo ">>> 1. Pulling latest code from GitHub..."
           git pull origin main
           
-          # ÉTAPE 2 : On crée le fichier .env APRÈS le pull.
-          # Le '>' écrase le fichier .env existant avec le nouveau contenu.
+          # ÉTAPE 2 : On crée le fichier .env APRÈS le pull
           echo ">>> 2. Creating .env file from secrets..."
           {
             echo "APP_ENV=prod"
@@ -78,3 +80,5 @@ jobs:
           php bin/console asset-map:compile --env=prod
 
           echo "✅ Deployment finished successfully!"
+
+          # Fin du script
