@@ -1,5 +1,5 @@
 # Nom du workflow qui apparaîtra dans l'onglet "Actions" de GitHub
-name: Deploy to Production Server
+name: Deploy to Hostinger Production Server
 
 # Déclenche le workflow à chaque push sur la branche "main"
 on:
@@ -32,12 +32,16 @@ jobs:
           # Se positionne dans le répertoire du projet
           cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony
           
+          # ÉTAPE 1 : On supprime l'ancien .env pour éviter les conflits
+          echo ">>> 1. Cleaning up old .env file..."
+          rm -f .env
+          
           # ÉTAPE 1 : On met à jour le code AVANT toute autre chose
-          echo ">>> 1. Pulling latest code from GitHub..."
+          echo ">>> 2. Pulling latest code from GitHub..."
           git pull origin main
           
           # ÉTAPE 2 : On crée le fichier .env APRÈS le pull
-          echo ">>> 2. Creating .env file from secrets..."
+          echo ">>> 3. Creating .env file from secrets..."
           {
             echo "APP_ENV=prod"
             echo "APP_SECRET='${{ secrets.APP_SECRET }}'"
@@ -52,15 +56,15 @@ jobs:
           } > .env
           
           # ÉTAPE 3 : On installe les dépendances PHP
-          echo ">>> 3. Installing Composer dependencies..."
+          echo ">>> 4. Installing Composer dependencies..."
           ../composer.phar install --no-dev --optimize-autoloader
           
           # ÉTAPE 4 : On vide le cache Symfony
-          echo ">>> 4. Clearing Symfony cache..."
+          echo ">>> 5. Clearing Symfony cache..."
           php bin/console cache:clear --env=prod
           
           # ÉTAPE 5 : On applique les migrations de la base de données
-          echo ">>> 5. Running database migrations..."
+          echo ">>> 6. Running database migrations..."
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
           
           echo "✅ Deployment finished successfully!"
