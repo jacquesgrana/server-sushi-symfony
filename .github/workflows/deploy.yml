@@ -32,7 +32,7 @@ jobs:
         MAILER_DSN: ${{ secrets.MAILER_DSN }}
         
       run: |
-        ssh -p 65002 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $SSH_USER@$SSH_SERVER "
+        ssh -p 65002 $SSH_USER@$SSH_SERVER "
         cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony &&
         git fetch origin main &&
         git reset --hard origin/main &&
