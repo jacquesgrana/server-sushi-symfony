@@ -1,78 +1,97 @@
-name: Deploy to Hostinger with ssh private key
+name: Deploy Symfony to Hostinger
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
 
-    - name: Deploy to Hostinger
-  env:
-    SSH_SERVER: ${{ secrets.SSH_SERVER }}
-    SSH_USER: ${{ secrets.SSH_USER }}
-    APP_SECRET: ${{ secrets.APP_SECRET }}
-    DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
-    DATABASE_SERVER_VERSION: ${{ secrets.DATABASE_SERVER_VERSION }}
-    EMAIL_ADMIN: ${{ secrets.EMAIL_ADMIN }}
-    EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-    EMAIL_OWNER: ${{ secrets.EMAIL_OWNER }}
-    MAILER_DSN: ${{ secrets.MAILER_DSN }}
-  run: |
-    # Première étape : créer le fichier .env avec le bon format
-    ssh -p 65002 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$SSH_USER@$SSH_SERVER" << 'EOF'
-    cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony || exit 1
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
 
-    # Créer un nouveau fichier .env avec le bon format
-    cat > .env.tmp << 'ENV_EOF'
-    APP_SECRET=%APP_SECRET%
+      - name: Deploy to Hostinger
+        env:
+          SSH_SERVER: ${{ secrets.SSH_SERVER }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          APP_SECRET: ${{ secrets.APP_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
+          DATABASE_SERVER_VERSION: ${{ secrets.DATABASE_SERVER_VERSION }}
+          EMAIL_ADMIN: ${{ secrets.EMAIL_ADMIN }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_OWNER: ${{ secrets.EMAIL_OWNER }}
+          MAILER_DSN: ${{ secrets.MAILER_DSN }}
+        run: |
+          # Configuration de la clé SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-    DATABASE_URL=%DATABASE_URL%
-    DATABASE_DRIVER=%DATABASE_DRIVER%
-    DATABASE_SERVER_VERSION=%DATABASE_SERVER_VERSION%
+          # Création du fichier .env avec le bon format
+          ssh -p 65002 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$SSH_USER@$SSH_SERVER" << 'EOF'
+          cd domains/sandybrown-duck-473650.hostingersite.com/public_html/server-sushi-symfony || exit 1
 
-    EMAIL_ADMIN=%EMAIL_ADMIN%
-    EMAIL_FROM=%EMAIL_FROM%
-    EMAIL_OWNER=%EMAIL_OWNER%
+          # Créer un nouveau fichier .env avec le format %VAR%
+          cat > .env.tmp << 'ENV_EOF'
+          APP_SECRET=%APP_SECRET%
 
-    MAILER_DSN=%MAILER_DSN%
-    ENV_EOF
+          DATABASE_URL=%DATABASE_URL%
+          DATABASE_DRIVER=%DATABASE_DRIVER%
+          DATABASE_SERVER_VERSION=%DATABASE_SERVER_VERSION%
 
-    # Remplacer les valeurs des variables
-    sed -i "s|%APP_SECRET%|${APP_SECRET}|g" .env.tmp
-    sed -i "s|%DATABASE_URL%|${DATABASE_URL}|g" .env.tmp
-    sed -i "s|%DATABASE_DRIVER%|${DATABASE_DRIVER}|g" .env.tmp
-    sed -i "s|%DATABASE_SERVER_VERSION%|${DATABASE_SERVER_VERSION}|g" .env.tmp
-    sed -i "s|%EMAIL_ADMIN%|${EMAIL_ADMIN}|g" .env.tmp
-    sed -i "s|%EMAIL_FROM%|${EMAIL_FROM}|g" .env.tmp
-    sed -i "s|%EMAIL_OWNER%|${EMAIL_OWNER}|g" .env.tmp
-    sed -i "s|%MAILER_DSN%|${MAILER_DSN}|g" .env.tmp
+          EMAIL_ADMIN=%EMAIL_ADMIN%
+          EMAIL_FROM=%EMAIL_FROM%
+          EMAIL_OWNER=%EMAIL_OWNER%
 
-    # Conserver les autres paramètres existants
-    if [ -f .env ]; then
-      grep -v -E '^(APP_SECRET|DATABASE_URL|DATABASE_DRIVER|DATABASE_SERVER_VERSION|EMAIL_ADMIN|EMAIL_FROM|EMAIL_OWNER|MAILER_DSN)' .env >> .env.tmp
-    fi
+          MAILER_DSN=%MAILER_DSN%
+          ENV_EOF
 
-    mv .env.tmp .env || exit 1
+          # Remplacer les valeurs des variables
+          sed -i "s|%APP_SECRET%|${APP_SECRET}|g" .env.tmp
+          sed -i "s|%DATABASE_URL%|${DATABASE_URL}|g" .env.tmp
+          sed -i "s|%DATABASE_DRIVER%|${DATABASE_DRIVER}|g" .env.tmp
+          sed -i "s|%DATABASE_SERVER_VERSION%|${DATABASE_SERVER_VERSION}|g" .env.tmp
+          sed -i "s|%EMAIL_ADMIN%|${EMAIL_ADMIN}|g" .env.tmp
+          sed -i "s|%EMAIL_FROM%|${EMAIL_FROM}|g" .env.tmp
+          sed -i "s|%EMAIL_OWNER%|${EMAIL_OWNER}|g" .env.tmp
+          sed -i "s|%MAILER_DSN%|${MAILER_DSN}|g" .env.tmp
 
-    # Suite du déploiement
-    git fetch origin main || exit 1
-    git reset --hard origin/main || exit 1
-    php ../composer.phar install --no-dev --optimize-autoloader || exit 1
-    php bin/console cache:clear --env=prod || exit 1
-    php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || exit 1
-    php bin/console asset-map:compile --env=prod || exit 1
-    EOF
-    
+          # Conserver les autres paramètres existants
+          if [ -f .env ]; then
+            grep -v -E '^(APP_SECRET|DATABASE_URL|DATABASE_DRIVER|DATABASE_SERVER_VERSION|EMAIL_ADMIN|EMAIL_FROM|EMAIL_OWNER|MAILER_DSN)' .env >> .env.tmp
+          fi
+
+          mv .env.tmp .env || exit 1
+
+          # Mise à jour du code
+          git fetch origin main || exit 1
+          git reset --hard origin/main || exit 1
+
+          # Installation des dépendances
+          php ../composer.phar install --no-dev --optimize-autoloader || exit 1
+
+          # Nettoyage du cache
+          php bin/console cache:clear --env=prod || exit 1
+
+          # Migrations de la base de données
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || exit 1
+
+          # Compilation des assets
+          php bin/console asset-map:compile --env=prod || exit 1
+
+          # Fix permissions
+          chmod -R 775 var/
+          chmod -R 775 public/
+          EOF
