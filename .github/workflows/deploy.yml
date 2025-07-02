@@ -18,7 +18,7 @@ jobs:
           tools: composer
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-dev --optimize-autoloader --apcu-autoloader --no-scripts
 
       - name: Deploy to Hostinger
         env:
@@ -45,6 +45,7 @@ jobs:
 
           # Créer un nouveau fichier .env avec le format %VAR%
           cat > .env.tmp << 'ENV_EOF'
+          APP_ENV=prod
           APP_SECRET=%APP_SECRET%
 
           DATABASE_URL=%DATABASE_URL%
@@ -70,7 +71,7 @@ jobs:
 
           # Conserver les autres paramètres existants
           if [ -f .env ]; then
-            grep -v -E '^(APP_SECRET|DATABASE_URL|DATABASE_DRIVER|DATABASE_SERVER_VERSION|EMAIL_ADMIN|EMAIL_FROM|EMAIL_OWNER|MAILER_DSN)' .env >> .env.tmp
+            grep -v -E '^(APP_ENV|APP_SECRET|DATABASE_URL|DATABASE_DRIVER|DATABASE_SERVER_VERSION|EMAIL_ADMIN|EMAIL_FROM|EMAIL_OWNER|MAILER_DSN)' .env >> .env.tmp
           fi
 
           mv .env.tmp .env || exit 1
@@ -80,10 +81,11 @@ jobs:
           git reset --hard origin/main || exit 1
 
           # Installation des dépendances
-          php ../composer.phar install --no-dev --optimize-autoloader || exit 1
+          php ../composer.phar install --no-dev --optimize-autoloader --apcu-autoloader || exit 1
 
           # Nettoyage du cache
-          php bin/console cache:clear --env=prod || exit 1
+          php bin/console cache:pool:clear cache.global_clearer || exit 1
+          php bin/console cache:warmup --env=prod || exit 1
 
           # Migrations de la base de données
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || exit 1
