@@ -1,6 +1,8 @@
 doctrine:
     dbal:
         # Configuration commune
+        #driver: pdo_mysql
+        #server_version: '10.6'
         url: '%env(resolve:DATABASE_URL)%'
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
@@ -29,7 +31,7 @@ when@dev:
     doctrine:
         dbal:
             driver: 'pdo_mysql'
-            server_version: 'mariadb-10.5.8'  # Version spécifique MariaDB
+            server_version: 'mariadb-10.6'  # Version spécifique MariaDB
 
 when@prod:
     doctrine:

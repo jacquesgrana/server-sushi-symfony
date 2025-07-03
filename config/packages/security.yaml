@@ -1,0 +1,58 @@
+# config/packages/security.yaml
+security:
+  password_hashers:
+    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+  providers:
+    app_user_provider:
+      entity:
+        class: App\Entity\User
+        property: email
+
+  firewalls:
+    # 1) Point d'entrée JSON‐login
+    login:
+      pattern: '^/api/login$'
+      stateless: true
+      json_login:
+        check_path:      /api/login
+        username_path:   email
+        password_path:   password
+        success_handler: lexik_jwt_authentication.handler.authentication_success
+        failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+    # 2) /api/contact-form passe en clair (pas de JWT)
+    contact_form:
+      pattern: '^/api/contact-form$'
+      stateless: true
+      security: false
+
+    # 2) Toutes les autres routes /api/* protégées par JWT
+    api:
+      pattern:   '^/api'
+      stateless:  true
+      provider:   app_user_provider
+      jwt:        ~       # <- laissez LexikJWTBundle injecter son Authenticator
+
+    # 3) Front Symfony classique / pages publiques
+    main:
+      pattern: '^/'
+      lazy:    true
+      provider: app_user_provider
+      # ici vos form_login, remember_me, etc.
+
+  access_control:
+    - { path: '^/api/login$',        roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    - { path: '^/api/contact-form$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    - { path: '^/api',               roles: IS_AUTHENTICATED_FULLY }
+    # - { path: '^/admin', roles: ROLE_ADMIN }
+    # - { path: '^/profile', roles: ROLE_USER }
+
+when@test:
+  security:
+    password_hashers:
+      Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+        algorithm:   auto
+        cost:        4
+        time_cost:   3
+        memory_cost: 10

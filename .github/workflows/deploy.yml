@@ -53,6 +53,7 @@ jobs:
             echo "EMAIL_FROM='${{ secrets.EMAIL_FROM }}'"
             echo "EMAIL_OWNER='${{ secrets.EMAIL_OWNER }}'"
             echo "MAILER_DSN='${{ secrets.MAILER_DSN }}'"
+            echo "JWT_PASSPHRASE='${{ secrets.JWT_PASSPHRASE }}'"
             echo "CORS_ALLOW_ORIGIN='^https://green-jackal-148000\.hostingersite\.com$'"
           } > .env
           
