@@ -57,14 +57,10 @@ jobs:
             echo "CORS_ALLOW_ORIGIN='^https://green-jackal-148000\.hostingersite\.com$'"
           } > .env
 
-          # 3) Déployer les clés JWT à partir des secrets
+          # 3) Injection des clés JWT
             mkdir -p config/jwt
-            cat << 'EOF' > config/jwt/private.pem
-            ${{ secrets.JWT_PRIVATE_KEY }}
-            EOF
-            cat << 'EOF' > config/jwt/public.pem
-            ${{ secrets.JWT_PUBLIC_KEY }}
-            EOF
+            echo "${{ secrets.JWT_PRIVATE_KEY_B64 }}" | base64 -d > config/jwt/private.pem
+            echo "${{ secrets.JWT_PUBLIC_KEY_B64 }}"  | base64 -d > config/jwt/public.pem
             chmod 700 config/jwt
             chmod 600 config/jwt/private.pem
             chmod 644 config/jwt/public.pem
