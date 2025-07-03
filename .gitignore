@@ -8,7 +8,7 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
-## ajouté
+## ajouté pour simplifier le deploiment
 /.env
 
 ###> lexik/jwt-authentication-bundle ###
