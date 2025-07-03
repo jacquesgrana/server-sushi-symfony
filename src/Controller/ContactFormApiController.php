@@ -25,7 +25,7 @@ final class ContactFormApiController extends AbstractController
         // Gérer les requêtes OPTIONS (preflight)
         if ($request->getMethod() === 'OPTIONS') {
             return new JsonResponse(null, 200, [
-                'Access-Control-Allow-Origin' => 'http://localhost:3000',
+                'Access-Control-Allow-Origin' => '^https://green-jackal-148000\.hostingersite\.com$',
                 'Access-Control-Allow-Methods' => 'POST, OPTIONS',
                 'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With',
                 'Access-Control-Max-Age' => '3600'
@@ -48,14 +48,7 @@ final class ContactFormApiController extends AbstractController
             }
         }
 
-        // appeler service pour envoyer les deux mails : un pour marie/moi + un pour l'utilisateur qui a rempli le formulaire pour confirmer
-        //$mailer = $this->container->get('mailer');
-        //$mailer->sendMail($data['email'], $data['name'], $data['firstName'], $data['phone'], $data['message']);
-
-
         // créer entités
-        // créer contactFormprospect puis créer contactForm
-
         $contactFormprospect = new ContactFormProspect();
         $contactFormprospect->setName($data['name']);
         $contactFormprospect->setFirstName($data['firstName']);
@@ -73,7 +66,6 @@ final class ContactFormApiController extends AbstractController
         $contactFormRepository->save($contactForm, false);
         $contactFormProspectRepository->save($contactFormprospect, true);
 
-        
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], false);
 
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], true);
