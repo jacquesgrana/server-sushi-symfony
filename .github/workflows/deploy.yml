@@ -56,6 +56,18 @@ jobs:
             echo "JWT_PASSPHRASE='${{ secrets.JWT_PASSPHRASE }}'"
             echo "CORS_ALLOW_ORIGIN='^https://green-jackal-148000\.hostingersite\.com$'"
           } > .env
+
+          # 3) Déployer les clés JWT à partir des secrets
+            mkdir -p config/jwt
+            cat << 'EOF' > config/jwt/private.pem
+            ${{ secrets.JWT_PRIVATE_KEY }}
+            EOF
+            cat << 'EOF' > config/jwt/public.pem
+            ${{ secrets.JWT_PUBLIC_KEY }}
+            EOF
+            chmod 700 config/jwt
+            chmod 600 config/jwt/private.pem
+            chmod 644 config/jwt/public.pem
           
           # ÉTAPE 3 : On installe les dépendances PHP
           echo ">>> 4. Installing Composer dependencies..."
