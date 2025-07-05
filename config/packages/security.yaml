@@ -34,7 +34,13 @@ security:
       provider:   app_user_provider
       jwt:        ~       # <- laissez LexikJWTBundle injecter son Authenticator
 
-    # 3) Front Symfony classique / pages publiques
+    # 3) Route pour obtenir les slides pour le carousel
+    carousel:
+      pattern: '^/carousel/get_slides$'
+      stateless: true
+      security: false  # Désactive la sécurité pour cette route
+
+    # 4) Front Symfony classique / pages publiques
     main:
       pattern: '^/'
       lazy:    true
@@ -42,9 +48,11 @@ security:
       # ici vos form_login, remember_me, etc.
 
   access_control:
+    - { path: '^/carousel/get_slides$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: '^/api/login$',        roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: '^/api/contact-form$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: '^/api',               roles: IS_AUTHENTICATED_FULLY }
+    - { path: '^/api/user/user_infos$', roles: IS_AUTHENTICATED_FULLY }
     # - { path: '^/admin', roles: ROLE_ADMIN }
     # - { path: '^/profile', roles: ROLE_USER }
 

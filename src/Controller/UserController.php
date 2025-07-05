@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,9 +19,11 @@ class UserController extends AbstractController
         }
 
         return new JsonResponse([
+            // 'id' => $user->getId(),
             'name' => $user->getName(),
             'firstName' => $user->getFirstName(),
             'email' => $user->getEmail()
+            // 'roles' => $user->getRoles()
         ], 200);
         
     }
