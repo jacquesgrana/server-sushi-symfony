@@ -25,6 +25,9 @@ class PhotoSlide
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $alt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $rank = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -74,6 +77,18 @@ class PhotoSlide
     public function setAlt(?string $alt): static
     {
         $this->alt = $alt;
+
+        return $this;
+    }
+
+    public function getRank(): ?int
+    {
+        return $this->rank;
+    }
+
+    public function setRank(?int $rank): static
+    {
+        $this->rank = $rank;
 
         return $this;
     }

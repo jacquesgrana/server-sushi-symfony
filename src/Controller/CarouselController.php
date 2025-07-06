@@ -21,7 +21,8 @@ class CarouselController extends AbstractController
                     'image' => $slide->getImage(),
                     'alt' => $slide->getAlt(),
                     'title' => $slide->getTitle(),
-                    'description' => $slide->getDescription()
+                    'description' => $slide->getDescription(),
+                    'rank' => $slide->getRank(),
                 ];
             }
         return $this->json([
