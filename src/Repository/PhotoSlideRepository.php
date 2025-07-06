@@ -16,6 +16,15 @@ class PhotoSlideRepository extends ServiceEntityRepository
         parent::__construct($registry, PhotoSlide::class);
     }
 
+        public function save(PhotoSlide $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
     //    /**
     //     * @return PhotoSlide[] Returns an array of PhotoSlide objects
     //     */

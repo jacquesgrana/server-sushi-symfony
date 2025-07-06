@@ -12,6 +12,7 @@ use App\Service\MailerService;
 use App\Entity\ContactForm;
 use App\Entity\ContactFormProspect;
 
+// TODO enlever 'api' de l'url ???!!!! et mofifier le parefeu et le front
 final class ContactFormApiController extends AbstractController
 {
     #[Route('/api/contact-form', name: 'app_contact_form_api', methods: ['POST', 'OPTIONS'])]
