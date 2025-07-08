@@ -31,7 +31,7 @@ class CarouselController extends AbstractController
             'data' => $data], 200);
     }
 
-    #[Route('api/carousel/up/{id}', name: 'app_carousel_up', methods: ['GET'])]
+    #[Route('api/carousel/up/{id}', name: 'app_carousel_slide_up', methods: ['GET'])]
     public function up(int $id, PhotoSlideRepository $photoSlideRepository): JsonResponse
     {
         $photoSlide = $photoSlideRepository->find($id);
@@ -63,7 +63,7 @@ class CarouselController extends AbstractController
         }
     }
 
-    #[Route('api/carousel/down/{id}', name: 'app_carousel_down', methods: ['GET'])]
+    #[Route('api/carousel/down/{id}', name: 'app_carousel_slide_down', methods: ['GET'])]
     public function down(int $id, PhotoSlideRepository $photoSlideRepository): JsonResponse
     {
         $photoSlide = $photoSlideRepository->find($id);
