@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\PhotoSlide;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
+
 
 /**
  * @extends ServiceEntityRepository<PhotoSlide>
@@ -24,6 +26,17 @@ class PhotoSlideRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
+
+        public function regenerateRanks(EntityManagerInterface $entityManager)
+            {
+                $slides = $this->findBy([], ['rank' => 'ASC']);
+                $cpt = 1;
+                foreach ($slides as $slide) {
+                    $slide->setRank($cpt);
+                    $entityManager->persist($slide);
+                    $cpt++;
+                }
+            } 
 
     //    /**
     //     * @return PhotoSlide[] Returns an array of PhotoSlide objects

@@ -33,6 +33,13 @@ class PhotoSlide
         return $this->id;
     }
 
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     public function getImage(): ?string
     {
         return $this->image;
@@ -91,5 +98,29 @@ class PhotoSlide
         $this->rank = $rank;
 
         return $this;
+    }
+
+    public function serialize(): array
+    {
+        return [
+            $this->id,
+            $this->image,
+            $this->alt,
+            $this->title,
+            $this->description,
+            $this->rank
+        ];
+    }
+
+    public static function deserialize(array $data): PhotoSlide
+    {
+        $toReturn = new PhotoSlide();
+        $toReturn->setId($data['id']);
+        $toReturn->setImage($data['image']);
+        $toReturn->setAlt($data['alt']);
+        $toReturn->setTitle($data['title']);
+        $toReturn->setDescription($data['description']);
+        $toReturn->setRank($data['rank']);
+        return $toReturn;
     }
 }

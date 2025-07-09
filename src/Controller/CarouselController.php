@@ -2,33 +2,32 @@
 
 namespace App\Controller;
 
+use App\Entity\PhotoSlide;
 use App\Repository\PhotoSlideRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class CarouselController extends AbstractController
 {
-    #[Route('/carousel/get_slides', name: 'app_carousel_get_slides', methods: ['GET'])]
+    #[Route('carousel/get_slides', name: 'app_carousel_get_slides', methods: ['GET'])]
     public function index(PhotoSlideRepository $photoSlideRepository): JsonResponse
     {
         $slides = $photoSlideRepository->findAll();
         $data = [];
         foreach ($slides as $slide) {
-                $data[] = [
-                    'id' => $slide->getId(),
-                    'image' => $slide->getImage(),
-                    'alt' => $slide->getAlt(),
-                    'title' => $slide->getTitle(),
-                    'description' => $slide->getDescription(),
-                    'rank' => $slide->getRank(),
-                ];
+                $data[] = $slide->serialize();
             }
         return $this->json([
             'success' => true,
             'message' => 'PhotoSlide listed successfully',
-            'data' => $data], 200);
+            'data' => $data
+        ], 200);
     }
 
     #[Route('api/carousel/up/{id}', name: 'app_carousel_slide_up', methods: ['GET'])]
@@ -57,7 +56,7 @@ class CarouselController extends AbstractController
         }
         else {
             return $this->json([
-                'success' => false,
+                'success' => true,
                 'message' => 'PhotoSlide already at the top',
                 'data' => []], 200);
         }
@@ -89,11 +88,195 @@ class CarouselController extends AbstractController
         }
         else {
             return $this->json([
-                'success' => false,
+                'success' => true,
                 'message' => 'PhotoSlide already at the bottom',
                 'data' => []], 200);
         }
     }                   
 
 
+    #[Route('api/carousel/update/carousel-image/{id}', name: 'api_update_carousel_image', methods: ['POST'])]
+    public function updateImage(PhotoSlide $photoSlide, PhotoSlideRepository $photoSlideRepository, Request $request, SluggerInterface $slugger): JsonResponse
+    {
+        //dd($photoSlide);
+
+        /** @var UploadedFile $uploadedFile */
+        $uploadedFile = $request->files->get('image');
+
+        $oldImage = $photoSlide->getImage();
+
+        // Si aucun fichier n'est envoyé, renvoyer une erreur
+        if (!$uploadedFile) {
+            return $this->json([
+                'success' => false,
+                'error' => 'No file uploaded.',
+                'data' => []
+            ], 400);
+        }
+
+        // 2. Sécurité : Créer un nom de fichier unique et sûr
+        $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
+
+        // 3. Déplacer le fichier vers le répertoire de destination
+        // Il est recommandé de définir ce chemin comme un paramètre dans services.yaml
+        $destination = $this->getParameter('kernel.project_dir').'/public/image/carousel';
+
+        try {
+            $uploadedFile->move($destination, $newFilename);
+        } catch (FileException $e) {
+            // Gérer l'exception si quelque chose se passe mal pendant le déplacement
+            return $this->json([
+                'success' => false,
+                'error' => 'Failed to move uploaded file.',
+                'data' => []
+            ], 500);
+        }
+
+        // supprimer l'ancienne image $oldImage
+        // TODO : try/catch ?
+        unlink($this->getParameter('kernel.project_dir').'/public/image/carousel/'.$oldImage);
+
+
+        $photoSlide->setImage($newFilename);
+        $photoSlideRepository->save($photoSlide, true);
+
+        return $this->json([
+            'success' => true,
+            'message' => 'photoSlide image updated successfully',
+            'data' => $newFilename
+        ] , 200);
+    }
+
+    #[Route('api/carousel/update/carousel-slide/{id}', name: 'api_update_carousel_slide', methods: ['POST'])]
+    public function updateSlide(PhotoSlide $photoSlide, PhotoSlideRepository $photoSlideRepository, Request $request, SluggerInterface $slugger): JsonResponse
+    {
+        if(!$photoSlide){
+            return $this->json([
+                'success' => false,
+                'message' => 'PhotoSlide not found',
+                'data' => []
+            ], 404);
+        }
+        if(!$request->get('title') || !$request->get('alt') || !$request->get('description')){
+            return $this->json([
+                'success' => false,
+                'message' => 'Missing parameters',
+                'data' => []
+            ], 404);
+        }
+
+        $photoSlide->setTitle($request->get('title'));
+        $photoSlide->setAlt($request->get('alt'));
+        $photoSlide->setDescription($request->get('description'));
+        $photoSlideRepository->save($photoSlide, true);
+
+        return $this->json([
+            'success' => true,
+            'message' => 'photoSlide updated successfully',
+            'data' => $photoSlide->serialize()
+        ] , 200);
+    }
+
+    #[Route('api/carousel/delete/carousel-slide/{id}', name: 'api_delete_carousel_slide', methods: ['POST'])]
+    public function deleteSlide(PhotoSlide $photoSlide, PhotoSlideRepository $photoSlideRepository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        if(!$photoSlide){
+            return $this->json([
+                'success' => false,
+                'message' => 'PhotoSlide not found',
+                'data' => []
+            ], 404);
+        }
+        $oldFileName = $photoSlide->getImage();
+        $entityManager->remove($photoSlide);
+        $entityManager->flush();
+        unlink($this->getParameter('kernel.project_dir').'/public/image/carousel/'.$oldFileName);
+        $photoSlideRepository->regenerateRanks($entityManager);
+        /*
+        // classer les slides par rank
+        $slides = $photoSlideRepository->findBy([], ['rank' => 'ASC']);
+        $cpt = 1;
+        foreach ($slides as $slide) {
+            $slide->setRank($cpt);
+            $entityManager->persist($slide);
+            $cpt++;
+        }
+        */
+        $entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'photoSlide deleted successfully',
+            'data' => []
+        ] , 200);
+    }
+
+    #[Route('api/carousel/create/carousel-slide', name: 'api_create_carousel_slide', methods: ['POST'])]
+    public function createSlide(Request $request, PhotoSlideRepository $photoSlideRepository, EntityManagerInterface $entityManager, SluggerInterface $slugger): JsonResponse
+    {
+        $uploadedFile = $request->files->get('imageFile');
+
+        // Si aucun fichier n'est envoyé, renvoyer une erreur
+        if (!$uploadedFile) {
+            return $this->json([
+                'success' => false,
+                'error' => 'No file uploaded.',
+                'data' => []
+            ], 400);
+        }
+
+        // 2. Sécurité : Créer un nom de fichier unique et sûr
+        $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
+
+        // 3. Déplacer le fichier vers le répertoire de destination
+        // Il est recommandé de définir ce chemin comme un paramètre dans services.yaml
+        $destination = $this->getParameter('kernel.project_dir').'/public/image/carousel';
+
+        try {
+            $uploadedFile->move($destination, $newFilename);
+        } 
+        catch (FileException $e) {
+            // Gérer l'exception si quelque chose se passe mal pendant le déplacement
+            return $this->json([
+                'success' => false,
+                'error' => 'Failed to move uploaded file.',
+                'data' => []
+            ], 500);
+        }
+
+        $title = $request->get('title');
+        $alt = $request->get('alt');
+        $description = $request->get('description');
+        $photoSlide = new PhotoSlide();
+        $photoSlide->setTitle($title);
+        $photoSlide->setAlt($alt);
+        $photoSlide->setDescription($description);
+        $photoSlide->setImage($newFilename);
+
+        //$slidesCount = $entityManager->getRepository(PhotoSlide::class)->count([]);
+        $slidesCount = $photoSlideRepository->count([]);
+        $photoSlide->setRank($slidesCount + 1);
+        /*
+        if($slidesCount == 0){
+            $photoSlide->setRank(1);
+        } 
+        else {
+            $photoSlide->setRank($slidesCount + 1);
+        }
+        */
+        // set rank to last rank + 1
+
+        $entityManager->persist($photoSlide);
+        $entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'photoSlide created successfully',
+            'data' => $photoSlide->serialize()
+        ] , 200);
+    }
 }
