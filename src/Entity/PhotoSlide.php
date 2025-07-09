@@ -103,12 +103,12 @@ class PhotoSlide
     public function serialize(): array
     {
         return [
-            $this->id,
-            $this->image,
-            $this->alt,
-            $this->title,
-            $this->description,
-            $this->rank
+            "id" => $this->id,
+            "image" => $this->image,
+            "alt" => $this->alt,
+            "title" => $this->title,
+            "description" => $this->description,
+            "rank" => $this->rank
         ];
     }
 
