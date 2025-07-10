@@ -92,7 +92,65 @@ class CarouselController extends AbstractController
                 'message' => 'PhotoSlide already at the bottom',
                 'data' => []], 200);
         }
-    }                   
+    }
+    
+    #[Route('api/carousel/top/{id}', name: 'app_carousel_slide_top', methods: ['GET'])]
+    public function top(int $id, PhotoSlideRepository $photoSlideRepository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $photoSlide = $photoSlideRepository->find($id);
+        if(!$photoSlide){
+            return $this->json([
+                'success' => false,
+                'message' => 'PhotoSlide not found',
+                'data' => []], 404);
+        }
+
+        if($photoSlide->getRank() > 1){
+            $photoSlide->setRank(0);
+            $photoSlideRepository->save($photoSlide, true);
+            $photoSlideRepository->regenerateRanks($entityManager);
+
+            return $this->json([
+                'success' => true,
+                'message' => 'PhotoSlide moved to top successfully',
+                'data' => $id], 200);
+        }
+        else {
+            return $this->json([
+                'success' => true,
+                'message' => 'PhotoSlide already at the top',
+                'data' => []], 200);
+        } 
+    }
+
+    #[Route('api/carousel/bottom/{id}', name: 'app_carousel_slide_bottom', methods: ['GET'])]
+    public function bottom(int $id, PhotoSlideRepository $photoSlideRepository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $photoSlide = $photoSlideRepository->find($id);
+        if(!$photoSlide){
+            return $this->json([
+                'success' => false,
+                'message' => 'PhotoSlide not found',
+                'data' => []], 404);
+        }
+        $slidesCount = count($photoSlideRepository->findAll());
+        if($photoSlide->getRank() < $slidesCount){
+            $photoSlide->setRank($slidesCount + 1);
+            $photoSlideRepository->save($photoSlide, true);
+            $photoSlideRepository->regenerateRanks($entityManager);
+
+            return $this->json([
+                'success' => true,
+                'message' => 'PhotoSlide moved to bottom successfully',
+                'data' => $id], 200);
+        }
+        else {
+            return $this->json([
+                'success' => true,
+                'message' => 'PhotoSlide already at the bottom',
+                'data' => []], 200);
+        }
+    }
 
 
     #[Route('api/carousel/update/carousel-image/{id}', name: 'api_update_carousel_image', methods: ['POST'])]
