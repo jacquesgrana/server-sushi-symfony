@@ -101,9 +101,9 @@ class CarouselController extends AbstractController
         //dd($photoSlide);
 
         /** @var UploadedFile $uploadedFile */
-        $uploadedFile = $request->files->get('image');
+        $uploadedFile = $request->files->get('imageFile');
 
-        $oldImage = $photoSlide->getImage();
+        $oldImageName = $photoSlide->getImage();
 
         // Si aucun fichier n'est envoyé, renvoyer une erreur
         if (!$uploadedFile) {
@@ -136,11 +136,20 @@ class CarouselController extends AbstractController
 
         // supprimer l'ancienne image $oldImage
         // TODO : try/catch ?
-        unlink($this->getParameter('kernel.project_dir').'/public/image/carousel/'.$oldImage);
+        //unlink($this->getParameter('kernel.project_dir').'/public/image/carousel/'.$oldImage);
 
 
         $photoSlide->setImage($newFilename);
         $photoSlideRepository->save($photoSlide, true);
+
+         // Suppression de l'ancienne image APRÈS que tout s'est bien passé
+        if ($oldImageName) {
+            $oldImagePath = $destination . '/' . $oldImageName;
+            if (file_exists($oldImagePath)) {
+                // Unlink est "best-effort", on ne bloque pas si ça échoue
+                @unlink($oldImagePath); 
+            }
+        }
 
         return $this->json([
             'success' => true,
@@ -226,22 +235,18 @@ class CarouselController extends AbstractController
                 'data' => []
             ], 404);
         }
-        $oldFileName = $photoSlide->getImage();
+        $oldImageName = $photoSlide->getImage();
         $entityManager->remove($photoSlide);
         $entityManager->flush();
-        unlink($this->getParameter('kernel.project_dir').'/public/image/carousel/'.$oldFileName);
+        //unlink($this->getParameter('kernel.project_dir').'/public/image/carousel/'.$oldFileName);
         $photoSlideRepository->regenerateRanks($entityManager);
-        /*
-        // classer les slides par rank
-        $slides = $photoSlideRepository->findBy([], ['rank' => 'ASC']);
-        $cpt = 1;
-        foreach ($slides as $slide) {
-            $slide->setRank($cpt);
-            $entityManager->persist($slide);
-            $cpt++;
+
+        if ($oldImageName) {
+            $oldImagePath = $this->getParameter('kernel.project_dir').'/public/image/carousel/' . $oldImageName;
+            if (file_exists($oldImagePath)) {
+                @unlink($oldImagePath);
+            }
         }
-        */
-        $entityManager->flush();
 
         return $this->json([
             'success' => true,

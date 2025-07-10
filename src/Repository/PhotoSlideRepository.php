@@ -36,6 +36,7 @@ class PhotoSlideRepository extends ServiceEntityRepository
                     $entityManager->persist($slide);
                     $cpt++;
                 }
+                $entityManager->flush();
             } 
 
     //    /**
