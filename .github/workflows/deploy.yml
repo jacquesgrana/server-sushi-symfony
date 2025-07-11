@@ -37,11 +37,11 @@ jobs:
           echo ">>> 1. Cleaning up old .env file..."
           rm -f .env
           
-          # ÉTAPE 1 : On met à jour le code AVANT toute autre chose
+          # ÉTAPE 2 : On met à jour le code AVANT toute autre chose
           echo ">>> 2. Pulling latest code from GitHub..."
           git pull origin main
           
-          # ÉTAPE 2 : On crée le fichier .env APRÈS le pull
+          # ÉTAPE 3 : On crée le fichier .env APRÈS le pull
           echo ">>> 3. Creating .env file from secrets..."
           {
             echo "APP_ENV=prod"
@@ -57,7 +57,7 @@ jobs:
             echo "CORS_ALLOW_ORIGIN='^https://green-jackal-148000\.hostingersite\.com$'"
           } > .env
 
-          # 3) Injection des clés JWT
+          # ÉTAPE 4 : Injection des clés JWT
             mkdir -p config/jwt
             echo "${{ secrets.JWT_PRIVATE_KEY_B64 }}" | base64 -d > config/jwt/private.pem
             echo "${{ secrets.JWT_PUBLIC_KEY_B64 }}"  | base64 -d > config/jwt/public.pem
@@ -65,17 +65,21 @@ jobs:
             chmod 600 config/jwt/private.pem
             chmod 644 config/jwt/public.pem
           
-          # ÉTAPE 3 : On installe les dépendances PHP
-          echo ">>> 4. Installing Composer dependencies..."
+          # ÉTAPE 5 : On installe les dépendances PHP
+          echo ">>> 5. Installing Composer dependencies..."
           ../composer.phar install --no-dev --optimize-autoloader
           
-          # ÉTAPE 4 : On vide le cache Symfony
-          echo ">>> 5. Clearing Symfony cache..."
+          # ÉTAPE 6 : On vide le cache Symfony
+          echo ">>> 6. Clearing Symfony cache..."
           php bin/console cache:clear --env=prod
           
-          # ÉTAPE 5 : On applique les migrations de la base de données
-          echo ">>> 6. Running database migrations..."
+          # ÉTAPE 7 : On applique les migrations de la base de données
+          echo ">>> 7. Running database migrations..."
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+
+          # ÉTAPE 8 : Vérification et création du répertoire des images du carrousel
+          echo ">>> 8. Ensuring carousel image directory exists..."
+          mkdir -p public/image/carousel
           
           echo "✅ Deployment finished successfully!"
 
