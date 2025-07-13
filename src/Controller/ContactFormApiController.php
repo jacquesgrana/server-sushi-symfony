@@ -9,6 +9,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\MailerService;
 use App\Entity\ContactFormProspect;
+use Doctrine\ORM\EntityManagerInterface;
+
 
 // TODO enlever 'api' de l'url ???!!!! et mofifier le parefeu et le front
 final class ContactFormApiController extends AbstractController
@@ -89,6 +91,18 @@ final class ContactFormApiController extends AbstractController
             'success' => true,
             'message' => 'ContactForm listed successfully',
             'data' => $data
+        ], 200);
+    }
+
+    #[Route('/api/contact-form/delete/{id}', name: 'app_contact_form_api_delete', methods: ['DELETE'])]
+    public function delete(ContactFormProspect $contactFormProspect, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $entityManager->remove($contactFormProspect);
+        $entityManager->flush();
+        return $this->json([
+            'success' => true,
+            'message' => 'ContactForm deleted successfully',
+            'data' => []
         ], 200);
     }
 }
