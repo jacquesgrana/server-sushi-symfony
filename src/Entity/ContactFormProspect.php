@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\ContactFormProspectRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ContactFormProspectRepository::class)]
@@ -27,19 +25,11 @@ class ContactFormProspect
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $phone = null;
 
+    #[ORM\Column(type: 'string', length: 512)]
+    private ?string $message = null;
+
     #[ORM\Column]
     private ?\DateTimeImmutable $date = null;
-
-    /**
-     * @var Collection<int, ContactForm>
-     */
-    #[ORM\OneToMany(targetEntity: ContactForm::class, mappedBy: 'prospect', orphanRemoval: true)]
-    private Collection $contactForms;
-
-    public function __construct()
-    {
-        $this->contactForms = new ArrayCollection();
-    }
 
     public function getId(): ?int
     {
@@ -94,6 +84,18 @@ class ContactFormProspect
         return $this;
     }
 
+    public function getMessage(): ?string
+    {
+        return $this->message;
+    }
+
+    public function setMessage(string $message): static
+    {
+        $this->message = $message;
+
+        return $this;
+    }
+
     public function getDate(): ?\DateTimeImmutable
     {
         return $this->date;
@@ -106,33 +108,16 @@ class ContactFormProspect
         return $this;
     }
 
-    /**
-     * @return Collection<int, ContactForm>
-     */
-    public function getContactForms(): Collection
+    public function serialize(): array
     {
-        return $this->contactForms;
-    }
-
-    public function addContactForm(ContactForm $contactForm): static
-    {
-        if (!$this->contactForms->contains($contactForm)) {
-            $this->contactForms->add($contactForm);
-            $contactForm->setProspect($this);
-        }
-
-        return $this;
-    }
-
-    public function removeContactForm(ContactForm $contactForm): static
-    {
-        if ($this->contactForms->removeElement($contactForm)) {
-            // set the owning side to null (unless already changed)
-            if ($contactForm->getProspect() === $this) {
-                $contactForm->setProspect(null);
-            }
-        }
-
-        return $this;
+        return [
+            "id" => $this->id,
+            "name" => $this->name,
+            "firstName" => $this->firstName,
+            "email" => $this->email,
+            "phone" => $this->phone,
+            "date" => $this->date,
+            "message" => $this->message
+        ];
     }
 }

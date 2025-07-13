@@ -55,34 +55,20 @@ final class ContactFormApiController extends AbstractController
         $contactFormprospect->setFirstName($data['firstName']);
         $contactFormprospect->setEmail($data['email']);
         $contactFormprospect->setPhone($data['phone']);
+        $contactFormprospect->setMessage($data['message']);
         $contactFormprospect->setDate(new \DateTimeImmutable());
 
-        $contactForm = new ContactForm();
-        $contactForm->setProspect($contactFormprospect);
-        $contactForm->setMessage($data['message']);
-
-        $contactFormprospect->addContactForm($contactForm);
-
-        // persister
-        $contactFormRepository->save($contactForm, false);
+        
         $contactFormProspectRepository->save($contactFormprospect, true);
 
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], false);
-
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], true);
-
         $mailerService->sendEmailToUser($data['name'], $data['firstName'], $data['email']);
 
         return new JsonResponse([
             'success' => true,
             'message' => 'Message envoyé avec succès !',  
-            'data' => [
-                'name' => $data['name'],
-                'firstName' => $data['firstName'],
-                'email' => $data['email'], 
-                'phone' => $data['phone'] ?? '',
-                'message' => $data['message']
-            ]
+            'data' => $contactFormprospect->serialize()
         ], 200);
     }
 }
