@@ -76,7 +76,7 @@ final class ContactFormApiController extends AbstractController
         ], 200);
     }
 
-    #[Route('/contact-form/get', name: 'app_contact_form_api_get', methods: ['GET'])]
+    #[Route('/api/contact-form/get', name: 'app_contact_form_api_get', methods: ['GET'])]
     public function index(ContactFormProspectRepository $contactFormProspectRepository
 ): JsonResponse
     {
