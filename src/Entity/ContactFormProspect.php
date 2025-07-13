@@ -108,7 +108,7 @@ class ContactFormProspect
         return $this;
     }
 
-    public function serialize(): array
+    public function normalize(): array
     {
         return [
             "id" => $this->id,

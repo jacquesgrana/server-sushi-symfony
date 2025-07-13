@@ -3,13 +3,11 @@
 namespace App\Controller;
 
 use App\Repository\ContactFormProspectRepository;
-use App\Repository\ContactFormRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\MailerService;
-use App\Entity\ContactForm;
 use App\Entity\ContactFormProspect;
 
 // TODO enlever 'api' de l'url ???!!!! et mofifier le parefeu et le front
@@ -19,8 +17,7 @@ final class ContactFormApiController extends AbstractController
     public function manageContactForm(
         Request $request, 
         MailerService $mailerService,
-        ContactFormProspectRepository $contactFormProspectRepository,
-        ContactFormRepository $contactFormRepository
+        ContactFormProspectRepository $contactFormProspectRepository
         ): JsonResponse
     {
         // Gérer les requêtes OPTIONS (preflight)
@@ -38,14 +35,22 @@ final class ContactFormApiController extends AbstractController
 
         // Vérifier que les données ont été reçues
         if (!$data) {
-            return new JsonResponse(['error' => 'Aucune donnée reçue'], 400);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Aucune donnée reçue',
+                'data' => []
+            ], 400);
         }
 
         // Vérifier les champs obligatoires (phone est facultatif)
         $requiredFields = ['email', 'message', 'name', 'firstName'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || trim($data[$field]) === '') {
-                return new JsonResponse(['error' => "Le champ $field est obligatoire"], 400);
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => "Le champ $field est obligatoire",
+                    'data' => []
+                ], 400);
             }
         }
 
@@ -57,7 +62,6 @@ final class ContactFormApiController extends AbstractController
         $contactFormprospect->setPhone($data['phone']);
         $contactFormprospect->setMessage($data['message']);
         $contactFormprospect->setDate(new \DateTimeImmutable());
-
         
         $contactFormProspectRepository->save($contactFormprospect, true);
 
@@ -68,7 +72,23 @@ final class ContactFormApiController extends AbstractController
         return new JsonResponse([
             'success' => true,
             'message' => 'Message envoyé avec succès !',  
-            'data' => $contactFormprospect->serialize()
+            'data' => $contactFormprospect->normalize()
+        ], 200);
+    }
+
+    #[Route('/contact-form/get', name: 'app_contact_form_api_get', methods: ['GET'])]
+    public function index(ContactFormProspectRepository $contactFormProspectRepository
+): JsonResponse
+    {
+        $contactForms = $contactFormProspectRepository->findAll();
+        $data = [];
+        foreach ($contactForms as $contactForm) {
+            $data[] = $contactForm->normalize();
+        }
+        return $this->json([
+            'success' => true,
+            'message' => 'ContactForm listed successfully',
+            'data' => $data
         ], 200);
     }
 }
