@@ -64,7 +64,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string) $this->email;
     }
 
-    // modifier car $roles est de type String au lieu de array
     /**
      * @see UserInterface
      */
@@ -77,7 +76,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
-    // modifier car $roles est de type String au lieu de array
     /**
      * @param list<string> $roles
      */
