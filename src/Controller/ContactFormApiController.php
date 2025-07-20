@@ -2,13 +2,13 @@
 
 namespace App\Controller;
 
-use App\Repository\ContactFormProspectRepository;
+use App\Repository\ContactFormRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\MailerService;
-use App\Entity\ContactFormProspect;
+use App\Entity\ContactForm;
 use Doctrine\ORM\EntityManagerInterface;
 
 
@@ -19,7 +19,7 @@ final class ContactFormApiController extends AbstractController
     public function manageContactForm(
         Request $request, 
         MailerService $mailerService,
-        ContactFormProspectRepository $contactFormProspectRepository
+        ContactFormRepository $contactFormRepository
         ): JsonResponse
     {
         // Gérer les requêtes OPTIONS (preflight)
@@ -57,15 +57,15 @@ final class ContactFormApiController extends AbstractController
         }
 
         // créer entités
-        $contactFormprospect = new ContactFormProspect();
-        $contactFormprospect->setName($data['name']);
-        $contactFormprospect->setFirstName($data['firstName']);
-        $contactFormprospect->setEmail($data['email']);
-        $contactFormprospect->setPhone($data['phone']);
-        $contactFormprospect->setMessage($data['message']);
-        $contactFormprospect->setDate(new \DateTimeImmutable());
+        $contactForm = new ContactForm();
+        $contactForm->setName($data['name']);
+        $contactForm->setFirstName($data['firstName']);
+        $contactForm->setEmail($data['email']);
+        $contactForm->setPhone($data['phone']);
+        $contactForm->setMessage($data['message']);
+        $contactForm->setDate(new \DateTimeImmutable());
         
-        $contactFormProspectRepository->save($contactFormprospect, true);
+        $contactFormRepository->save($contactForm, true);
 
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], false);
         $mailerService->sendEmailToOwner($data['name'], $data['firstName'], $data['email'], $data['phone'], $data['message'], true);
@@ -74,15 +74,15 @@ final class ContactFormApiController extends AbstractController
         return new JsonResponse([
             'success' => true,
             'message' => 'Message envoyé avec succès !',  
-            'data' => $contactFormprospect->normalize()
+            'data' => $contactForm->normalize()
         ], 200);
     }
 
     #[Route('/api/contact-form/get', name: 'app_contact_form_api_get', methods: ['GET'])]
-    public function index(ContactFormProspectRepository $contactFormProspectRepository
+    public function index(ContactFormRepository $contactFormRepository
 ): JsonResponse
     {
-        $contactForms = $contactFormProspectRepository->findAll();
+        $contactForms = $contactFormRepository->findAll();
         $data = [];
         foreach ($contactForms as $contactForm) {
             $data[] = $contactForm->normalize();
@@ -95,9 +95,9 @@ final class ContactFormApiController extends AbstractController
     }
 
     #[Route('/api/contact-form/delete/{id}', name: 'app_contact_form_api_delete', methods: ['DELETE'])]
-    public function delete(ContactFormProspect $contactFormProspect, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(ContactForm $contactForm, EntityManagerInterface $entityManager): JsonResponse
     {
-        $entityManager->remove($contactFormProspect);
+        $entityManager->remove($contactForm);
         $entityManager->flush();
         return $this->json([
             'success' => true,

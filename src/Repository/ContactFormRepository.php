@@ -2,21 +2,21 @@
 
 namespace App\Repository;
 
-use App\Entity\ContactFormProspect;
+use App\Entity\ContactForm;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @extends ServiceEntityRepository<ContactFormProspect>
  */
-class ContactFormProspectRepository extends ServiceEntityRepository
+class ContactFormRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ContactFormProspect::class);
+        parent::__construct($registry, ContactForm::class);
     }
 
-    public function save(ContactFormProspect $entity, bool $flush = false): void
+    public function save(ContactForm $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
 
