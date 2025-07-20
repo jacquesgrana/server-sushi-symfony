@@ -31,6 +31,10 @@ class ContactForm
     #[ORM\Column]
     private ?\DateTimeImmutable $date = null;
 
+    #[ORM\ManyToOne(inversedBy: 'contactForms')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?ContactFormProspect $contactFormProspect = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -110,6 +114,7 @@ class ContactForm
 
     public function normalize(): array
     {
+
         return [
             "id" => $this->id,
             "name" => $this->name,
@@ -117,7 +122,34 @@ class ContactForm
             "email" => $this->email,
             "phone" => $this->phone,
             "date" => $this->date,
-            "message" => $this->message
+            "message" => $this->message,
+            "contactFormProspect" => $this->contactFormProspect ? $this->contactFormProspect->normalizeWithoutDependencies() : []
         ];
+    }
+
+    public function normalizeWithoutDependencies(): array
+    {
+        return [
+            "id" => $this->id,
+            "name" => $this->name,
+            "firstName" => $this->firstName,
+            "email" => $this->email,
+            "phone" => $this->phone,
+            "date" => $this->date,
+            "message" => $this->message,
+            "contactFormProspect" => [],
+        ];
+    }
+
+    public function getContactFormProspect(): ?ContactFormProspect
+    {
+        return $this->contactFormProspect;
+    }
+
+    public function setContactFormProspect(?ContactFormProspect $contactFormProspect): static
+    {
+        $this->contactFormProspect = $contactFormProspect;
+
+        return $this;
     }
 }
