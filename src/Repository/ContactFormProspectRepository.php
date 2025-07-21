@@ -16,6 +16,15 @@ class ContactFormProspectRepository extends ServiceEntityRepository
         parent::__construct($registry, ContactFormProspect::class);
     }
 
+    public function save(ContactFormProspect $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
     //    /**
     //     * @return ContactFormProspect[] Returns an array of ContactFormProspect objects
     //     */

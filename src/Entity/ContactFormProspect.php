@@ -161,7 +161,7 @@ class ContactFormProspect
             "phone" => $this->phone,
             "comment" => $this->comment,
             "contactForms" => [],
-            "date" => $this->date,
+            "date" => $this->date
         ];
     }
 
@@ -182,7 +182,7 @@ class ContactFormProspect
             "phone" => $this->phone,
             "comment" => $this->comment,
             "contactForms" => $contactForms,
-            "date" => $this->date,
+            "date" => $this->date
         ];
     }
 }
