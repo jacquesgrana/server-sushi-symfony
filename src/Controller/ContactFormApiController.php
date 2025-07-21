@@ -97,6 +97,21 @@ final class ContactFormApiController extends AbstractController
     #[Route('/api/contact-form/delete/{id}', name: 'app_contact_form_api_delete', methods: ['DELETE'])]
     public function delete(ContactForm $contactForm, EntityManagerInterface $entityManager): JsonResponse
     {
+        if(!$contactForm){
+            return $this->json([
+                'success' => false,
+                'message' => 'ContactForm not found',
+                'data' => []
+            ], 404);
+        }
+        // tester si le $contactForm a un prospect si oui le supprimer de la liste du prospect
+        if($contactForm->getContactFormProspect()){
+            $contactForm->getContactFormProspect()->removeContactForm($contactForm);
+            //$contactForm->setContactFormProspect(null); // pas la peine, le removeContactForm fait cela
+            //$entityManager->persist($contactForm->getContactFormProspect());
+            //$entityManager->flush();
+        }
+
         $entityManager->remove($contactForm);
         $entityManager->flush();
         return $this->json([
