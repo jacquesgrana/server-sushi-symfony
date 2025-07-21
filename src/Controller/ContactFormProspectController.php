@@ -9,7 +9,7 @@ use App\Repository\ContactFormProspectRepository;
 
 final class ContactFormProspectController extends AbstractController
 {
-    #[Route('/api/contact-form-prospect/get', name: 'app_contact_form_api_get', methods: ['GET'])]
+    #[Route('/api/contact-form-prospect/get', name: 'app_contact_form_prospect_api_get', methods: ['GET'])]
     public function getContactFormProspects(
         ContactFormProspectRepository $contactFormProspectRepository
     ): JsonResponse
