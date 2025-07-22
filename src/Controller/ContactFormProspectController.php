@@ -7,6 +7,7 @@ use App\Entity\ContactFormProspect;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Repository\ContactFormProspectRepository;
 
@@ -34,7 +35,8 @@ final class ContactFormProspectController extends AbstractController
         ContactForm $contactForm,
         EntityManagerInterface $entityManager,
         ContactFormProspectRepository $contactFormProspectRepository
-    ) {
+    ): JsonResponse
+     {
 
         if ($contactForm->getContactFormProspect()) {
             return $this->json([
@@ -81,8 +83,50 @@ final class ContactFormProspectController extends AbstractController
                 'data' => $contactFormProspect->normalize()
             ], 200);
         }
+    }
 
-        
-        
+    #[Route('/api/contact-form-prospect/update/{id}', name: 'app_contact_form_prospect_api_update', methods: ['PUT'])]
+    public function updateContactFormProspect(
+        ContactFormProspect $contactFormProspect,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): JsonResponse
+    {
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+
+        $contactFormProspect->setName($data['name']);
+        $contactFormProspect->setFirstName($data['firstName']);
+        $contactFormProspect->setEmail($data['email']);
+        $contactFormProspect->setPhone($data['phone']);
+        $contactFormProspect->setComment($data['comment']);
+        //$entityManager->persist($contactFormProspect);
+        $entityManager->flush();
+        return $this->json([
+            'success' => true,
+            'message' => 'Prospect updated successfully',
+            'data' => $contactFormProspect->normalize()
+        ], 200);
+    }
+
+    #[Route('/api/contact-form-prospect/delete/{id}', name: 'app_contact_form_prospect_api_delete', methods: ['DELETE'])]
+    public function deleteContactFormProspect(
+        ContactFormProspect $contactFormProspect,
+        EntityManagerInterface $entityManager
+    ): JsonResponse
+    {
+        if($contactFormProspect->getContactForms()->count() > 0) {
+            foreach ($contactFormProspect->getContactForms() as $contactForm) {
+                $contactForm->setContactFormProspect(null);
+                //$entityManager->persist($contactForm);
+            }
+        }
+        $entityManager->remove($contactFormProspect);
+        $entityManager->flush();
+        return $this->json([
+            'success' => true,
+            'message' => 'Prospect deleted successfully',
+            'data' => []
+        ], 200);
     }
 }
