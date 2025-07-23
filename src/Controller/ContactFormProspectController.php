@@ -145,7 +145,7 @@ final class ContactFormProspectController extends AbstractController
 
         if ($oldProspect) {
             return $this->json([
-                'success' => true,
+                'success' => false,
                 'message' => 'Email already exists',
                 'data' => $oldProspect->normalize()
             ], 200);
