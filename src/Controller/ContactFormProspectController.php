@@ -129,4 +129,42 @@ final class ContactFormProspectController extends AbstractController
             'data' => []
         ], 200);
     }
+
+    #[Route('/api/contact-form-prospect/create', name: 'app_contact_form_prospect_api_create', methods: ['POST'])]
+    public function createContactFormProspect(
+        EntityManagerInterface $entityManager,
+        Request $request,
+        ContactFormProspectRepository $contactFormProspectRepository
+    ): JsonResponse 
+    {
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+
+        // TODO verifier si l'email n'est pas deja utilisé par un autre Prospect ???
+        $oldProspect = $contactFormProspectRepository->findOneBy(['email' => $data['email']]);
+
+        if ($oldProspect) {
+            return $this->json([
+                'success' => true,
+                'message' => 'Email already exists',
+                'data' => $oldProspect->normalize()
+            ], 200);
+        }
+
+        $contactFormProspect = new ContactFormProspect();
+        $contactFormProspect->setName($data['name']);
+        $contactFormProspect->setFirstName($data['firstName']);
+        $contactFormProspect->setEmail($data['email']);
+        $contactFormProspect->setPhone($data['phone']);
+        $contactFormProspect->setComment($data['comment']);
+        $contactFormProspect->setDate(new \DateTime());
+        $entityManager->persist($contactFormProspect);
+        $entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Prospect created successfully',
+            'data' => $contactFormProspect->normalize()
+        ], 200);
+    }
 }
