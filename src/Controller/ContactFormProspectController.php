@@ -191,6 +191,7 @@ final class ContactFormProspectController extends AbstractController
         $filteredDatas = [];
         foreach ($prospects as $p) {
             $row = [
+                'id'        => $p->getId(),
                 'name'      => $p->getName(),
                 'firstName' => $p->getFirstName(),
                 'email'     => $p->getEmail(),
