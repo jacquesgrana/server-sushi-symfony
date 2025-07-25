@@ -209,7 +209,7 @@ final class ContactFormProspectController extends AbstractController
         //dd($filteredDatas);
 
         // transformer en csv
-        
+        /*
         $csv = fopen('php://output', 'w');
         // régler le séparateur de colonne
         fputcsv($csv, $fields, ';');
@@ -221,18 +221,37 @@ final class ContactFormProspectController extends AbstractController
         // renvoyer le fichier csv
 
         $csvFile = file_get_contents('php://output');
+        // créer fichier et utiliser $csv
+
         $response = new Response();
+        //set status code 200
+        $response->setStatusCode(200);
         $response->headers->set('Content-Type', 'text/csv');
         $response->headers->set('Content-Disposition', 'attachment; filename="prospects.csv"');
         $response->setContent($csvFile);
         
+        return $response;*/
+
+        // 1. Démarrage du buffer
+        ob_start();
+
+        // 2. On écrit sur le flux de sortie
+        $fp = fopen('php://output', 'w');
+        fputcsv($fp, $fields, ';');
+        foreach ($filteredDatas as $row) {
+            fputcsv($fp, $row, ';');
+        }
+        fclose($fp);
+
+        // 3. On récupère le contenu du buffer
+        $csvFile = ob_get_clean();
+
+        // 4. On renvoie la Response
+        $response = new Response($csvFile, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="prospects.csv"',
+        ]);
+
         return $response;
-        /*
-        return $this->json([
-            'success' => true,
-            'message' => 'Prospects exported successfully',
-            'data' => $filteredDatas
-        ], 200);
-        */
     }
 }
