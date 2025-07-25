@@ -25,6 +25,18 @@ class ContactFormProspectRepository extends ServiceEntityRepository
         }
     }
 
+    public function findByProspectIds($prospectIds): array
+    {
+        if ($prospectIds) {
+            return $this->createQueryBuilder('p')
+                ->andWhere('p.id IN (:prospectIds)')
+                ->setParameter('prospectIds', $prospectIds)
+                ->getQuery()
+                ->getResult();
+        }
+        return [];
+    }
+
     //    /**
     //     * @return ContactFormProspect[] Returns an array of ContactFormProspect objects
     //     */

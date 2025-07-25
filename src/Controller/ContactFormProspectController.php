@@ -7,6 +7,8 @@ use App\Entity\ContactFormProspect;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Repository\ContactFormProspectRepository;
@@ -166,5 +168,70 @@ final class ContactFormProspectController extends AbstractController
             'message' => 'Prospect created successfully',
             'data' => $contactFormProspect->normalize()
         ], 200);
+    }
+
+    #[Route('/api/contact-form-prospect/export', name: 'app_contact_form_prospect_api_export', methods: ['POST'])]
+    public function exportProspectsFromForm(
+        ContactFormProspectRepository $contactFormProspectRepository,
+        Request $request
+        ): Response
+    {
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+        //dd($data);
+        $prospectIdsString = $data['prospects'];
+        $prospectIds = $prospectIdsString ? explode(',', $prospectIdsString) : [];
+
+        $fieldsString = $data['fields'];
+        $fields = $fieldsString ? explode(',', $fieldsString) : [];
+        //dd($prospectIds, $fields);
+        $prospects = $contactFormProspectRepository->findByProspectIds($prospectIds);
+
+        //dd($prospects);
+        $filteredDatas = [];
+        foreach ($prospects as $p) {
+            $row = [
+                'name'      => $p->getName(),
+                'firstName' => $p->getFirstName(),
+                'email'     => $p->getEmail(),
+                'phone'     => $p->getPhone(),
+                'comment'   => $p->getComment(),
+            ];
+
+            // ne conserver que les clés demandées
+            $filteredDatas[] = array_intersect_key(
+                $row,
+                array_flip($fields)
+            );
+        }
+
+        //dd($filteredDatas);
+
+        // transformer en csv
+        
+        $csv = fopen('php://output', 'w');
+        // régler le séparateur de colonne
+        fputcsv($csv, $fields, ';');
+        foreach ($filteredDatas as $data) {
+            fputcsv($csv, $data, ';');
+        }
+        fclose($csv);
+        //dd($csv);
+        // renvoyer le fichier csv
+
+        $csvFile = file_get_contents('php://output');
+        $response = new Response();
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="prospects.csv"');
+        $response->setContent($csvFile);
+        
+        return $response;
+        /*
+        return $this->json([
+            'success' => true,
+            'message' => 'Prospects exported successfully',
+            'data' => $filteredDatas
+        ], 200);
+        */
     }
 }
