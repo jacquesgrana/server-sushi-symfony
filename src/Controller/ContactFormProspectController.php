@@ -208,30 +208,7 @@ final class ContactFormProspectController extends AbstractController
 
         //dd($filteredDatas);
 
-        // transformer en csv
-        /*
-        $csv = fopen('php://output', 'w');
-        // régler le séparateur de colonne
-        fputcsv($csv, $fields, ';');
-        foreach ($filteredDatas as $data) {
-            fputcsv($csv, $data, ';');
-        }
-        fclose($csv);
-        //dd($csv);
-        // renvoyer le fichier csv
-
-        $csvFile = file_get_contents('php://output');
-        // créer fichier et utiliser $csv
-
-        $response = new Response();
-        //set status code 200
-        $response->setStatusCode(200);
-        $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="prospects.csv"');
-        $response->setContent($csvFile);
-        
-        return $response;*/
-
+        // TODO mettre dans un service ou librairie
         // 1. Démarrage du buffer
         ob_start();
 
