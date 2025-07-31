@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class BlogPostController extends AbstractController
 {
 
-    #[Route('/blog-post/get', name: 'app_blog_post_get', methods: ['GET'])]
+    #[Route('/blog-post/published/get', name: 'app_blog_post_published_get', methods: ['GET'])]
     public function getPosts(BlogPostRepository $blogPostRepository): JsonResponse
     {
         $posts = $blogPostRepository->findBy(['isPublished' => true], ['rank' => 'ASC']);

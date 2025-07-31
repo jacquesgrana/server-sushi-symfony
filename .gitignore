@@ -6,10 +6,11 @@
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
 /public/image/carousel/
+/public/image/blog_post/
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
-## ajouté pour simplifier le deploiment
+## ajouté pour simplifier le deploiement
 /.env
 
 ###> lexik/jwt-authentication-bundle ###

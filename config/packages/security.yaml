@@ -29,7 +29,7 @@ security:
       provider:   app_user_provider
       jwt:        ~       # <- laissez LexikJWTBundle injecter son Authenticator
 
-    # 3) Route pour obtenir les slides pour le carousel
+    # 3) Route pour obtenir les slides pour le carousel (enlever ???)
     carousel:
       pattern: '^/carousel/get_slides$'
       stateless: true
