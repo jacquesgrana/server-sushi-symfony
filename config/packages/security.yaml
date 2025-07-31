@@ -12,10 +12,10 @@ security:
   firewalls:
     # 1) Point d'entrée JSON‐login
     login:
-      pattern: '^/api/login$'
+      pattern: '^/login$'
       stateless: true
       json_login:
-        check_path:      /api/login
+        check_path:      /login
         username_path:   email
         password_path:   password
         success_handler: lexik_jwt_authentication.handler.authentication_success
@@ -49,7 +49,7 @@ security:
 
   access_control:
     - { path: '^/carousel/get_slides$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
-    - { path: '^/api/login$',        roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    # - { path: '^/api/login$',        roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: '^/api/contact-form$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: '^/api',               roles: IS_AUTHENTICATED_FULLY }
     - { path: '^/api/user/user_infos$', roles: IS_AUTHENTICATED_FULLY }

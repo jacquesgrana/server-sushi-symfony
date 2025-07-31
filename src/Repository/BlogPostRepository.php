@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\BlogPost;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
+
 
 /**
  * @extends ServiceEntityRepository<BlogPost>
@@ -15,6 +17,24 @@ class BlogPostRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, BlogPost::class);
     }
+
+    public function regenerateRanks(EntityManagerInterface $em)
+    {
+        // on ne récupère que les posts publiés, triés par rank asc
+        $posts = $this->findBy(
+            ['isPublished' => true],
+            ['rank' => 'ASC']
+        );
+
+        $i = 1;
+        foreach ($posts as $post) {
+            $post->setRank($i);
+            $i++;
+        }
+
+        $em->flush();
+    }
+
 
     //    /**
     //     * @return BlogPost[] Returns an array of BlogPost objects
