@@ -15,7 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 // TODO enlever 'api' de l'url ???!!!! et mofifier le parefeu et le front
 final class ContactFormApiController extends AbstractController
 {
-    #[Route('/api/contact-form', name: 'app_contact_form_api', methods: ['POST', 'OPTIONS'])]
+    #[Route('/contact-form', name: 'app_contact_form_api', methods: ['POST', 'OPTIONS'])]
     public function manageContactForm(
         Request $request, 
         MailerService $mailerService,

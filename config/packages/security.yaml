@@ -21,11 +21,6 @@ security:
         success_handler: lexik_jwt_authentication.handler.authentication_success
         failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-    # 2) /api/contact-form passe en clair (pas de JWT)
-    contact_form:
-      pattern: '^/api/contact-form$'
-      stateless: true
-      security: false
 
     # 2) Toutes les autres routes /api/* protégées par JWT
     api:
@@ -50,7 +45,7 @@ security:
   access_control:
     - { path: '^/carousel/get_slides$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
     # - { path: '^/api/login$',        roles: IS_AUTHENTICATED_ANONYMOUSLY }
-    - { path: '^/api/contact-form$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    # - { path: '^/api/contact-form$', roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: '^/api',               roles: IS_AUTHENTICATED_FULLY }
     - { path: '^/api/user/user_infos$', roles: IS_AUTHENTICATED_FULLY }
     # - { path: '^/admin', roles: ROLE_ADMIN }
