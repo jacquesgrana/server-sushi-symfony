@@ -25,7 +25,7 @@ class CarouselController extends AbstractController
             }
         return $this->json([
             'success' => true,
-            'message' => 'PhotoSlide listed successfully',
+            'message' => 'PhotoSlides listed successfully',
             'data' => $data
         ], 200);
     }
