@@ -24,6 +24,22 @@ class BlogPostController extends AbstractController
             'data' => $data
         ]);
     }
-}
 
+    #[Route('/api/blog-post/unpublished/get', name: 'app_blog_post_unpublished_get', methods: ['GET'])]
+    public function getUnpublishedPosts(
+        BlogPostRepository $blogPostRepository
+        ): JsonResponse
+    {
+        $posts = $blogPostRepository->findBy(['isPublished' => false], ['id' => 'DESC']);
+        $data = [];
+        foreach ($posts as $post) {
+            $data[] = $post->normalize();
+        }
+        return $this->json([
+            'success' => true,
+            'message' => 'Unpublished BlogPosts listed successfully',
+            'data' => $data
+        ]);
+    }
+}
 ?>
