@@ -7,7 +7,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\BlogPost;
-use App\Repository\BlogTagRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class BlogPostController extends AbstractController
