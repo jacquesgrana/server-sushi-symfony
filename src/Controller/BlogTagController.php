@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class BlogTagController extends AbstractController
 {
-    #[Route('/blog-tag/get', name: 'app_api_tags', methods: ['GET'])]
+    #[Route('/blog-tag/get', name: 'app_blog_tag_get', methods: ['GET'])]
     public function getTags(BlogTagRepository $blogTagRepository): JsonResponse 
     {
         $tags = $blogTagRepository->findAll();

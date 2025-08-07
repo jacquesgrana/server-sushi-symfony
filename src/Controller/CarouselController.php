@@ -251,16 +251,9 @@ class CarouselController extends AbstractController
     #[Route('api/carousel/update/carousel-slide/{id}', name: 'api_update_carousel_slide', methods: ['POST'])]
     public function updateSlide(PhotoSlide $photoSlide, PhotoSlideRepository $photoSlideRepository, Request $request): JsonResponse
     {
-        // Pas besoin de vérifier $photoSlide, le ParamConverter de Symfony le fait pour nous.
-        // S'il ne trouve pas l'entité, il renvoie déjà une 404.
-
-        // 1. Récupérer le contenu brut du corps de la requête (qui est notre JSON)
         $content = $request->getContent();
-        
-        // 2. Décoder la chaîne JSON en tableau associatif PHP
         $data = json_decode($content, true);
 
-        // 3. Vérifier que les paramètres existent dans le tableau $data
         if (!isset($data['title']) || !isset($data['alt']) || !isset($data['description'])) {
             return $this->json([
                 'success' => false,
@@ -269,7 +262,6 @@ class CarouselController extends AbstractController
             ], 400); // 400 Bad Request est plus approprié qu'un 404 ici
         }
 
-        // 4. Utiliser les données du tableau $data
         $photoSlide->setTitle($data['title']);
         $photoSlide->setAlt($data['alt']);
         $photoSlide->setDescription($data['description']);

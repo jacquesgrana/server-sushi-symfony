@@ -7,7 +7,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\BlogPost;
+use App\Repository\BlogTagRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\Common\Collections\ArrayCollection;
+
+
 
 class BlogPostController extends AbstractController
 {
@@ -231,5 +236,62 @@ class BlogPostController extends AbstractController
             'data' => $post->normalize()
         ], 200);
     }
+
+
+    ///api/blog-post/update/
+
+    #[Route('/api/blog-post/update/infos/{id}', name: 'app_blog_post_update', methods: ['PATCH'])]
+    public function updateInfos(
+        BlogPost $post,
+        EntityManagerInterface $entityManager,
+        BlogTagRepository $blogTagRepository,
+        Request $request
+        ): JsonResponse
+    {
+
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+
+        if(!isset($data['slug']) || !isset($data['title']) || !isset($data['intro']) || !isset($data['text']) || !isset($data['tags'])) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Missing parameters in JSON body',
+                'data' => []
+            ], 400);
+        }
+
+        $post->setSlug($data['slug']);
+        $post->setTitle($data['title']);
+        $post->setIntro($data['intro']);
+        $post->setText($data['text']);
+        $post->setModifiedAt(new \DateTimeImmutable());
+
+        $tagIds  = array_filter(array_map('intval', explode(';', $data['tags'])));
+        $newTags = $blogTagRepository->findBy(['id' => $tagIds]);
+
+        if (count($newTags) !== count($tagIds)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Some tag IDs do not exist',
+            ], 400);
+        }
+
+        $post->setTags(new ArrayCollection($newTags));
+        $entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'BlogPost infos updated successfully',
+            'data' => $post->normalize()
+        ], 200);
+    }
 }
+/*
+slug: slug,
+                title: title, 
+                intro: intro, 
+                text: text, 
+                tags: tags.join(',') 
+ */
 ?>
+

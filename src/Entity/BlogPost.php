@@ -181,21 +181,37 @@ class BlogPost
         return $this->tags;
     }
 
+    public function setTags(Collection $tags): static
+    {
+        // supprime les anciens
+        foreach (new ArrayCollection($this->tags->toArray()) as $oldTag) {
+            $this->removeTag($oldTag);
+        }
+        // ajoute les nouveaux
+        foreach ($tags as $tag) {
+            $this->addTag($tag);
+        }
+        return $this;
+    }
+
+    // src/Entity/BlogPost.php
     public function addTag(BlogTag $tag): static
     {
         if (!$this->tags->contains($tag)) {
             $this->tags->add($tag);
+            $tag->addBlogPost($this);    // garde ta logique actuelle
         }
-
         return $this;
     }
 
     public function removeTag(BlogTag $tag): static
     {
-        $this->tags->removeElement($tag);
-
+        if ($this->tags->removeElement($tag)) {
+            $tag->removeBlogPost($this);
+        }
         return $this;
     }
+
 
     public function isPublished(): ?bool
     {
@@ -252,7 +268,44 @@ class BlogPost
             "tags" => $tags
         ];
     }
-
-
-
 }
+
+/*
+améliorer la normalisation : à verifier !!
+
+private function getBaseData(): array
+{
+    return [
+        'id'         => $this->id,
+        'rank'       => $this->rank,
+        'slug'       => $this->slug,
+        'title'      => $this->title,
+        'intro'      => $this->intro,
+        'text'       => $this->text,
+        'imageName'  => $this->imageName,
+        'createdAt'  => $this->createdAt->format(DATE_ATOM),
+        'modifiedAt' => $this->modifiedAt->format(DATE_ATOM),
+        'isPublished'=> $this->isPublished,
+        'author'     => $this->author->normalizeWithoutDependencies(),
+    ];
+}
+
+public function normalizeWithoutDependencies(): array
+{
+    return array_merge(
+        $this->getBaseData(),
+        ['tags' => []]
+    );
+}
+
+public function normalize(): array
+{
+    $data = $this->getBaseData();
+    $data['tags'] = [];
+    foreach ($this->tags as $tag) {
+        $data['tags'][] = $tag->normalizeWithoutDependencies();
+    }
+    return $data;
+}
+
+*/
