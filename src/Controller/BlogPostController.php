@@ -11,8 +11,9 @@ use App\Repository\BlogTagRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
-
-
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class BlogPostController extends AbstractController
 {
@@ -285,13 +286,61 @@ class BlogPostController extends AbstractController
             'data' => $post->normalize()
         ], 200);
     }
+
+
+///api/blog-post/update/image/
+
+    #[Route('/api/blog-post/update/image/{id}', name: 'app_blog_post_update_image', methods: ['POST'])]
+    public function updateImage(
+        BlogPost $post,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        SluggerInterface $slugger
+    ): JsonResponse {
+
+        /** @var UploadedFile $uploadedFile */
+        $uploadedFile = $request->files->get('imageFile');
+        $oldImageName = $post->getImageName();
+
+        if(!$uploadedFile) {
+            return $this->json([
+                'success' => false,
+                'error' => 'No file uploaded.',
+                'data' => []
+            ], 400);
+        }
+
+        $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
+
+        $destination = $this->getParameter('kernel.project_dir').'/public/image/blog_post';
+
+        try {
+            $uploadedFile->move($destination, $newFilename);
+        } 
+        catch (FileException $e) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Failed to move uploaded file.',
+                'data' => []
+            ], 400);
+        }
+
+        $post->setImageName($newFilename);
+        $post->setModifiedAt(new \DateTimeImmutable());
+        $entityManager->flush();
+
+        if($oldImageName && file_exists($destination.'/'.$oldImageName)) {
+            unlink($destination.'/'.$oldImageName);
+        }
+
+        return $this->json([
+            'success' => true,
+            'message' => 'BlogPost image updated successfully',
+            'data' => $post->normalize()
+        ], 200);
+    }
 }
-/*
-slug: slug,
-                title: title, 
-                intro: intro, 
-                text: text, 
-                tags: tags.join(',') 
- */
 ?>
 

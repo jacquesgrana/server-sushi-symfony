@@ -154,7 +154,12 @@ class CarouselController extends AbstractController
 
 
     #[Route('api/carousel/update/carousel-image/{id}', name: 'api_update_carousel_image', methods: ['POST'])]
-    public function updateImage(PhotoSlide $photoSlide, PhotoSlideRepository $photoSlideRepository, Request $request, SluggerInterface $slugger): JsonResponse
+    public function updateImage(
+        PhotoSlide $photoSlide, 
+        PhotoSlideRepository $photoSlideRepository, 
+        Request $request, 
+        SluggerInterface $slugger
+        ): JsonResponse
     {
         //dd($photoSlide);
 
