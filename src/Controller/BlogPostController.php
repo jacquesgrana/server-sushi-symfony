@@ -410,6 +410,41 @@ class BlogPostController extends AbstractController
             'data' => $post->normalize()
         ], 200);
     }
+
+    #[Route('/api/blog-post/delete/{id}', name: 'app_blog_post_delete', methods: ['DELETE'])]
+    public function deleteBlogPost(
+        BlogPost $post, 
+        EntityManagerInterface $entityManager,
+        BlogPostRepository $blogPostRepository
+        ): JsonResponse
+    {
+        $isPublished = $post->isPublished();
+        $oldImageName = $post->getImageName();
+        
+        if($post->getTags()) {
+            foreach ($post->getTags() as $tag) {
+                $post->removeTag($tag);
+            }
+        }
+
+        $entityManager->remove($post);
+        $entityManager->flush();
+
+        if ($isPublished) {
+            $blogPostRepository->regenerateRanks($entityManager);
+        }
+        if ($oldImageName) {
+            $oldImagePath = $this->getParameter('kernel.project_dir').'/public/image/blog_post/' . $oldImageName;
+            if (file_exists($oldImagePath)) {
+                @unlink($oldImagePath);
+            }
+        }
+        return $this->json([
+            'success' => true,
+            'message' => 'BlogPost deleted successfully',
+            'data' => []
+        ], 200);
+    }
 }
 ?>
 
