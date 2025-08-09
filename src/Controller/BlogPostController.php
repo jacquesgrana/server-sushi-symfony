@@ -341,6 +341,75 @@ class BlogPostController extends AbstractController
             'data' => $post->normalize()
         ], 200);
     }
+
+    
+    #[Route('/api/blog-post/create', name: 'app_blog_post_create', methods: ['POST'])]
+    public function createBlogPost(
+        Request $request, 
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger,
+        BlogTagRepository $blogTagRepository
+        ): JsonResponse
+    {
+        $user = $this->getUser();
+        //dd($user);
+        /** @var UploadedFile $uploadedFile */
+        $uploadedFile = $request->files->get('imageFile');
+
+        // Si aucun fichier n'est envoyé, renvoyer une erreur
+        if (!$uploadedFile) {
+            return $this->json([
+                'success' => false,
+                'error' => 'No file uploaded.',
+                'data' => []
+            ], 400);
+        }
+
+        $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();  
+
+        $destination = $this->getParameter('kernel.project_dir').'/public/image/blog_post';
+
+        try {
+            $uploadedFile->move($destination, $newFilename);
+        } 
+        catch (FileException $e) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Failed to move uploaded file.',
+                'data' => []
+            ], 400);
+        }
+
+        //$data = json_decode($request->getContent(), true);
+
+        $post = new BlogPost();
+
+        $post->setSlug($request->get('slug'));
+        $post->setTitle($request->get('title'));
+        $post->setIntro($request->get('intro'));
+        $post->setText($request->get('text'));
+        $post->setImageName($newFilename);
+        $post->setCreatedAt(new \DateTimeImmutable());
+        $post->setModifiedAt(new \DateTimeImmutable());
+        $post->setAuthor($user);
+        $post->setIsPublished(false);
+        $post->setRank(0);
+
+        $tagIds  = array_filter(array_map('intval', explode(';', $request->get('tags'))));
+        $newTags = $blogTagRepository->findBy(['id' => $tagIds]);
+        $post->setTags(new ArrayCollection($newTags));
+        $entityManager->persist($post);
+        $entityManager->flush();
+        //$blogPostRepository->regenerateRanks($entityManager);
+
+        return $this->json([
+            'success' => true,
+            'message' => 'BlogPost created successfully',
+            'data' => $post->normalize()
+        ], 200);
+    }
 }
 ?>
 

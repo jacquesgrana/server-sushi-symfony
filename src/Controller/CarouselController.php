@@ -374,6 +374,6 @@ class CarouselController extends AbstractController
             'success' => true,
             'message' => 'photoSlide created successfully',
             'data' => $photoSlide->serialize()
-        ] , 200);
+        ], 200);
     }
 }
