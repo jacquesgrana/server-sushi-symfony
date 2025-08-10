@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Repository\BlogTagRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\BlogTag;
 
 class BlogTagController extends AbstractController
 {
@@ -50,6 +52,90 @@ class BlogTagController extends AbstractController
             "data" => ["isNewSlug" => $isNewSlug]
         ], 200);
     }
+
+    #[Route('/api/blog-tag/update/{id}', name: 'app_blog_tag_update', methods: ['PATCH'])]
+    public function updateTag(
+        BlogTag $blogTag,
+        BlogTagRepository $blogTagRepository,
+        Request $request,
+        EntityManagerInterface $entityManager
+        ): JsonResponse 
+        {
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+
+        if(!isset($data['slug']) || !isset($data['name'])) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Missing parameters in JSON body',
+                'data' => []
+            ], 400);
+        }
+
+        $isNewSlug = $blogTagRepository->findOneBy(['slug' => $data['slug']]) ? false : true;
+
+        if (!$isNewSlug) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Tag slug already exists',
+                'data' => []
+            ], 400);
+        }
+
+        $blogTag->setSlug($data['slug']);
+        $blogTag->setName($data['name']);
+
+        $entityManager->flush();
+
+        return new JsonResponse([
+            "success" => true,
+            "message" => "Tag updated successfully",
+            "data" => $blogTag->normalize()
+        ], 200);
+    }
+
+    #[Route('/api/blog-tag/create', name: 'app_blog_tag_create', methods: ['POST'])]
+    public function createTag(
+        BlogTagRepository $blogTagRepository,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): JsonResponse 
+    {
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+
+        if(!isset($data['slug']) || !isset($data['name'])) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Missing parameters in JSON body',
+                'data' => []
+            ], 400);
+        }
+
+        $isNewSlug = $blogTagRepository->findOneBy(['slug' => $data['slug']]) ? false : true;
+
+        if (!$isNewSlug) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Tag slug already exists',
+                'data' => []
+            ], 400);
+        }
+
+        $blogTag = new BlogTag();
+        $blogTag->setSlug($data['slug']);
+        $blogTag->setName($data['name']);
+
+        $entityManager->persist($blogTag);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            "success" => true,
+            "message" => "Tag created successfully",
+            "data" => $blogTag->normalize()
+        ], 200);
+    }
+        
 }
 
 ?>
