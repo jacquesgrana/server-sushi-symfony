@@ -143,6 +143,13 @@ class BlogTagController extends AbstractController
         EntityManagerInterface $entityManager
         ): JsonResponse
     {
+        if($blogTag->getBlogPosts() && $blogTag->getBlogPosts()->count() > 0) {
+            $posts = $blogTag->getBlogPosts();
+            foreach ($posts as $blogPost) {
+                $blogPost->removeTag($blogTag);
+            }
+        }
+
         $entityManager->remove($blogTag);
         $entityManager->flush();
         return $this->json([
