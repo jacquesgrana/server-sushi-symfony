@@ -61,6 +61,7 @@ class BlogTagController extends AbstractController
         EntityManagerInterface $entityManager
         ): JsonResponse 
         {
+
         $content = $request->getContent();
         $data = json_decode($content, true);
 
@@ -135,7 +136,21 @@ class BlogTagController extends AbstractController
             "data" => $blogTag->normalize()
         ], 200);
     }
-        
+      
+    #[Route('/api/blog-tag/delete/{id}', name: 'app_blog_tag_delete', methods: ['DELETE'])]
+    public function deleteTag(
+        BlogTag $blogTag, 
+        EntityManagerInterface $entityManager
+        ): JsonResponse
+    {
+        $entityManager->remove($blogTag);
+        $entityManager->flush();
+        return $this->json([
+            'success' => true,
+            'message' => 'Tag deleted successfully',
+            'data' => []
+        ], 200);
+    }
 }
 
 ?>
