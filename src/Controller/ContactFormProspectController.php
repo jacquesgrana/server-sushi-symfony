@@ -32,7 +32,7 @@ final class ContactFormProspectController extends AbstractController
         ], 200);
     }
 
-    #[Route('/api/contact-form-prospect/create/{id}', name: 'app_contact_form_prospect_api_create', methods: ['POST'])]
+    #[Route('/api/contact-form-prospect/create-from-contact-form/{id}', name: 'app_contact_form_prospect_api_create', methods: ['POST'])]
     public function createProspectFromContactForm(
         ContactForm $contactForm,
         EntityManagerInterface $entityManager,
